@@ -2,7 +2,6 @@
 -- The $1.00 minimum is a TUNABLE product rule enforced in app code via
 -- config.min_payout_cents (admin UI included); the table keeps only the
 -- positivity invariant so tests/QA can lower the min without a schema change.
-PRAGMA foreign_keys=OFF;
 
 CREATE TABLE payouts_new (
   id              TEXT PRIMARY KEY,
@@ -40,4 +39,3 @@ ALTER TABLE payouts_new RENAME TO payouts;
 CREATE INDEX idx_payouts_status ON payouts(status, created_at);
 CREATE INDEX idx_payouts_user ON payouts(user_id, created_at);
 
-PRAGMA foreign_keys=ON;

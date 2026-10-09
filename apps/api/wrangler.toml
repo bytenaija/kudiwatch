@@ -31,7 +31,7 @@ ENV_NAME = "staging"
 [[env.staging.d1_databases]]
 binding = "DB"
 database_name = "kudiwatch-staging"
-database_id = "6fbfeec7-9447-4b8e-be7c-0e80f82c73c1"
+database_id = "975b2014-d5ce-464e-976b-40643a55dcb2"
 migrations_dir = "../../db/migrations"
 
 [[env.staging.r2_buckets]]

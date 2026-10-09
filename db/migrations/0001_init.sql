@@ -3,7 +3,6 @@
 -- ids = TEXT (crypto.randomUUID()).
 -- Applies cleanly to D1 AND local SQLite (node:sqlite).
 
-PRAGMA journal_mode=WAL;
 
 CREATE TABLE users (
   id               TEXT PRIMARY KEY,
@@ -140,8 +139,8 @@ CREATE TABLE watch_sessions (
   failure_reason  TEXT,
   ip              TEXT, asn INTEGER,
   device_fp       TEXT,
-  -- Implementation bookkeeping (not in the deepdive's column list; speeds up
-  -- heartbeat validation to a single-row read+update). See docs/DECISIONS.md.
+  -- Implementation bookkeeping, not in the deepdive column list.
+  -- Speeds up heartbeat validation to a single-row read+update (see docs/DECISIONS.md).
   last_seq        INTEGER NOT NULL DEFAULT 0,
   last_position_s REAL NOT NULL DEFAULT 0,
   last_hb_ts      INTEGER,
@@ -294,8 +293,8 @@ CREATE TABLE velocity_windows (
   PRIMARY KEY (scope, window_start)
 );
 
--- Dev-only: last mock OTP per phone. NEVER read in prod code paths;
--- exposed only through /_dev routes (not mounted when ENV_NAME=prod).
+-- Dev-only: last mock OTP per phone. NEVER read in prod code paths.
+-- Exposed only through /_dev routes (not mounted when ENV_NAME=prod).
 CREATE TABLE dev_last_otp (
   phone_e164 TEXT PRIMARY KEY,
   code       TEXT NOT NULL,
