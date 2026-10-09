@@ -1,11 +1,10 @@
-/* KudiWatch service worker: app shell cached; video NEVER cached (always streamed
-   via token-bound /v1/stream URLs). API calls pass through (offline queue lives
-   in the page via IndexedDB). */
-const CACHE = 'kw-shell-v1';
+/* KudiWatch service worker (SPA build): app shell cached; video NEVER cached
+   (always streamed via token-bound /v1/stream URLs). API calls pass through
+   (offline queue lives in the page via IndexedDB). */
+const CACHE = 'kw-shell-v2';
 const SHELL = [
-  '/app/', '/app/index.html', '/app/signup.html', '/app/earnings.html', '/app/payout.html',
-  '/app/watch.html', '/css/kw.css', '/js/kw.js', '/js/player.js',
-  '/manifest.webmanifest', '/icons/icon.svg', '/',
+  '/', '/index.html',
+  '/manifest.webmanifest', '/icons/icon.svg',
 ];
 
 self.addEventListener('install', (e) => {
@@ -29,13 +28,13 @@ self.addEventListener('fetch', (e) => {
     caches.match(e.request).then((hit) => {
       if (hit) return hit;
       return fetch(e.request).then((res) => {
-        // Cache same-origin static assets opportunistically.
+        // Cache same-origin static assets opportunistically (hashed SPA chunks included).
         if (res.ok && url.origin === self.location.origin) {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put(e.request, copy));
         }
         return res;
-      }).catch(() => caches.match('/app/index.html'));
+      }).catch(() => caches.match('/index.html'));
     })
   );
 });

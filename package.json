@@ -1,1 +1,42 @@
-{"dependencies":{"@hono/node-server":"^2.1.4","hono":"^4.13.13","jose":"^6.2.12","zod":"^4.6.5"},"description":"KudiWatch — pay for verified human attention. Sponsored-attention / offerwall platform.","name":"kudiwatch","private":true,"scripts":{"adv":"tsx scripts/adversarial.ts","cron":"tsx scripts/cron-once.ts","dev":"tsx apps/api/src/local/server.ts","e2e":"tsx scripts/e2e.ts","gen:videos":"bash scripts/gen-videos.sh","seed":"tsx scripts/seed.ts","test":"vitest run","typecheck":"tsc --noEmit"},"type":"module","version":"0.1.0","devDependencies":{"@types/node":"^26.6.4","tsx":"^4.23.15","typescript":"^7.0.2","vitest":"^5.0.3","wrangler":"^4.149.0"}}
+{
+  "dependencies": {
+    "@hono/node-server": "^2.1.4",
+    "@tanstack/react-router": "^1.170.41",
+    "@tanstack/react-start": "^1.168.60",
+    "hono": "^4.13.13",
+    "jose": "^6.2.12",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "zod": "^4.6.5"
+  },
+  "description": "KudiWatch — pay for verified human attention. Sponsored-attention / offerwall platform.",
+  "name": "kudiwatch",
+  "private": true,
+  "scripts": {
+    "adv": "tsx scripts/adversarial.ts",
+    "cron": "tsx scripts/cron-once.ts",
+    "dev": "tsx apps/api/src/local/server.ts",
+    "e2e": "tsx scripts/e2e.ts",
+    "gen:videos": "bash scripts/gen-videos.sh",
+    "seed": "tsx scripts/seed.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "build:web": "cd apps/web && npx vite build && cp dist/client/_shell.html dist/client/index.html",
+    "typecheck:web": "tsc --noEmit -p apps/web/tsconfig.json",
+    "test:player": "tsx --tsconfig apps/web/tsconfig.json apps/web/src/components/__tests__/player-core.test.ts",
+    "adv:player": "tsx scripts/adv-player.ts"
+  },
+  "type": "module",
+  "version": "0.1.0",
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3",
+    "wrangler": "^4.149.0"
+  }
+}

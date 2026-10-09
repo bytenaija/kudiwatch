@@ -32,15 +32,20 @@ apps/api/src/
     r2fs.ts           R2Adapter over ./data/r2
     prod-bindings.ts  D1/R2 thin adapters for real Workers deploys
 
-apps/web/public/      static PWA + advertiser SPA + admin console (no build step;
-                      Pages-compatible as-is)
-  app/                watcher PWA: signup · queue · watch (player) · earnings · payout
-  advertise/          advertiser dashboard
-  admin/              admin console
-  js/kw.js            shared API client, auth, offline queue
-  js/player.js        hardened WatchPlayer (1x lock, seek clamp, visibility pause,
-                      verified-segments bar, attention overlays)
-  sw.js               service worker (shell cached; video NEVER cached)
+apps/web/              TanStack Start + React + Tailwind CSS v4 (TypeScript) SPA.
+                      `npm run build:web` → apps/web/dist/client (served as the
+                      worker's [assets]; index.html is the SPA shell, deep links
+                      resolve via not_found_handling = "single-page-application")
+  src/routes/         / (landing) · /app (queue) · /app/signup · /app/watch (player)
+                      /app/earnings · /app/payout · /advertise · /admin
+  src/components/
+    WatchPlayer.tsx   faithful port of the hardened player: 1x lock, seek clamp,
+                      visibility pause, heartbeat seq chain, attention overlays,
+                      verified-segments bar
+    ui.tsx            Toast, TopBar, TabBar, sheets, OfflineBar, BusyButton
+  src/lib/api.ts      API client (X-Device-Fp, cookies kw_at/kw_rt), money fmt,
+                      IndexedDB offline queue — same /v1/* contract as the API
+  public/             manifest.webmanifest · icons/ · sw.js (shell cached; video NEVER cached)
 
 db/migrations/        0001 schema (21 tables) · 0002 ledger normal_side · 0003 payout CHECK
 db/seed.sql           config defaults + ASN reputation

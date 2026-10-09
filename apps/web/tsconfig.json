@@ -1,0 +1,1 @@
+{"compilerOptions":{"allowImportingTsExtensions":false,"jsx":"react-jsx","noEmit":true,"noUncheckedIndexedAccess":false,"types":["vite/client","node"]},"extends":"../../tsconfig.json","include":["src","vite.config.ts"]}

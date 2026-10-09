@@ -1,4 +1,36 @@
-/* KudiWatch design system — DESIGN.md tokens. Mobile-first, 360px baseline. */
+@import "tailwindcss";
+
+/* Tailwind v4 theme wired to the KudiWatch DESIGN.md tokens (kw.css :root).
+   `inline` keeps utilities referencing the live CSS vars, so
+   prefers-color-scheme dark mode keeps working. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-ink2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-primary: var(--primary);
+  --color-primary-deep: var(--primary-deep);
+  --color-on-primary: var(--on-primary);
+  --color-gold: var(--gold);
+  --color-gold-bg: var(--gold-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-warn-bg: var(--warn-bg);
+  --color-warn-ink: var(--warn-ink);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+  --color-ok: var(--ok);
+  --font-sans: var(--font);
+  --font-mono: var(--mono);
+}
+
+/* KudiWatch design system — DESIGN.md tokens. Mobile-first, 360px baseline.
+   Ported verbatim from the static build (apps/web/public/css/kw.css) so the
+   visual contract is unchanged. Tailwind utilities are available for new
+   layout needs; components below remain the source of truth. */
 :root {
   --bg: #ffffff; --surface: #f2f6f3; --card: #ffffff;
   --ink: #101814; --ink-2: #33403a; --muted: #57665e; --line: #dde6e0;
@@ -235,3 +267,24 @@ details.receipt .detail dd { margin: 0 0 8px; font-variant-numeric: tabular-nums
   border-radius: 50%; animation: spin .7s linear infinite; display: inline-block;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Watch stage (ported from watch.html) */
+.stage { position: relative; background: #000; border-radius: 12px; overflow: hidden; aspect-ratio: 16/9; }
+.stage video { width: 100%; height: 100%; display: block; }
+.stage .overlay {
+  position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+  background: rgba(0,0,0,.78); color: #fff; text-align: center; padding: 24px; z-index: 5;
+}
+.stage .overlay.show { display: flex; }
+.transport { display: flex; align-items: center; gap: 8px; padding: 8px 4px; }
+.tbtn {
+  min-width: 48px; min-height: 48px; border: none; background: var(--surface); color: var(--ink);
+  border-radius: 10px; font-size: 18px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+}
+.lockbadge {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600;
+  border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; color: var(--ink-2);
+}
+.segbar { position: relative; height: 12px; background: var(--surface); border-radius: 999px; border: 1px solid var(--line); margin: 4px 0; }
+.segbar .ph { position: absolute; top: -3px; bottom: -3px; width: 3px; background: var(--ink); border-radius: 2px; transform: translateX(-50%); }
+.segbar .touch { position: absolute; left: 0; right: 0; top: -12px; bottom: -12px; }

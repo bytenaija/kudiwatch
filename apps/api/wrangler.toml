@@ -39,9 +39,10 @@ binding = "R2"
 bucket_name = "kw-videos-staging"
 
 [env.staging.assets]
-directory = "../web/public"
+directory = "../web/dist/client"
 binding = "ASSETS"
 run_worker_first = ["/v1/*"]
+not_found_handling = "single-page-application"
 
 [dev]
 port = 8787

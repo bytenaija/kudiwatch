@@ -14,7 +14,7 @@ const ROOT = path.resolve(here, '..', '..', '..', '..'); // ~/workspace/kudiwatc
 const DATA = path.join(ROOT, 'data');
 const DB_PATH = process.env.KW_DB ?? path.join(DATA, 'kudiwatch.db');
 const R2_DIR = path.join(DATA, 'r2');
-const WEB_DIR = path.join(ROOT, 'apps', 'web', 'public');
+const WEB_DIR = path.join(ROOT, 'apps', 'web', 'dist', 'client');
 
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -61,12 +61,18 @@ async function serveStatic(pathname: string): Promise<Response | null> {
   }
   try {
     const st = await fs.stat(file);
-    if (!st.isFile()) return null;
-    const ext = path.extname(file).toLowerCase();
+    if (!st.isFile()) throw new Error('not a file');    const ext = path.extname(file).toLowerCase();
     // Never serve .mp4 from the web dir as video cache — videos stream via /v1/stream only.
     const body = await fs.readFile(file);
     return new Response(body, { headers: { 'Content-Type': MIME[ext] ?? 'application/octet-stream', 'Cache-Control': 'no-cache' } });
   } catch {
+    // SPA fallback: extensionless deep links (e.g. /app/watch) serve the shell.
+    if (!path.extname(pathname)) {
+      try {
+        const body = await fs.readFile(path.join(WEB_DIR, 'index.html'));
+        return new Response(body, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' } });
+      } catch { /* fall through */ }
+    }
     return null;
   }
 }
