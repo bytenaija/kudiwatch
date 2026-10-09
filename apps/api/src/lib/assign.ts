@@ -79,6 +79,7 @@ export async function nextOffer(
      JOIN videos v ON v.id = c.video_id
      LEFT JOIN advertiser_profiles ap ON ap.user_id = c.advertiser_id
      WHERE c.status = 'live'
+       AND c.advertiser_id != ?
        AND (c.starts_at IS NULL OR c.starts_at <= ?)
        AND (c.ends_at IS NULL OR c.ends_at > ?)
        AND c.spent_cents + c.reserved_cents < c.budget_cents
@@ -88,7 +89,7 @@ export async function nextOffer(
                        WHERE a.campaign_id = c.id AND a.user_id = ?
                          AND a.status IN ('claimed', 'completed'))
      ORDER BY c.priority DESC LIMIT 24`
-  ).bind(today, now, now, today, userId).all<CampaignCandidate & { targeting: string }>();
+  ).bind(today, userId, now, now, today, userId).all<CampaignCandidate & { targeting: string }>();
 
   const skipCooldown = await getConfigNum(db, 'skip_cooldown_s');
   const dev = deviceClass(opts.ua);

@@ -100,14 +100,23 @@ app.post('/videos/:id/confirm', async (c: AppContext) => {
   }).safeParse(body);
   if (!parsed.success) return fail(c, 'bad_request', 'duration_s (and dimensions) are required.');
 
-  const video = await queryOne<{ id: string; advertiser_id: string; status: string; r2_key: string }>(
-    c.env.DB, 'SELECT id, advertiser_id, status, r2_key FROM videos WHERE id = ?', videoId);
+  const video = await queryOne<{ id: string; advertiser_id: string; status: string; r2_key: string; size_bytes: number }>(
+    c.env.DB, 'SELECT id, advertiser_id, status, r2_key, size_bytes FROM videos WHERE id = ?', videoId);
   if (!video || video.advertiser_id !== user.id) return fail(c, 'not_found', 'Video not found.', 404);
   if (video.status !== 'uploaded') return fail(c, 'bad_state', `Video is ${video.status}.`, 409);
 
   // Bytes must actually be in storage (local shim or R2).
   const head = await c.env.R2.head(video.r2_key);
   if (!head) return fail(c, 'no_bytes', 'Upload the file first — no bytes found for this video.', 409);
+
+  // QA finding 4 (partial): the declared size_bytes must match the stored
+  // bytes exactly. Lying about size to bypass max_upload_bytes is rejected here.
+  // (Duration/container probing needs ffprobe — unavailable in Workers; the
+  // human admin review remains the gate for media validity. See DECISIONS #36.)
+  if (head.size !== video.size_bytes) {
+    return fail(c, 'size_mismatch',
+      `Uploaded bytes (${head.size}) do not match the declared size (${video.size_bytes}). Re-upload the file.`, 422);
+  }
 
   const minDur = await getConfigNum(c.env.DB, 'min_video_duration_s');
   const maxDur = await getConfigNum(c.env.DB, 'max_video_duration_s');

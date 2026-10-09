@@ -94,7 +94,13 @@ app.post('/assignments/:id/claim', async (c: AppContext) => {
   }
 
   // Device gate: >2 accounts on one device blocks new claims until admin clears.
+  // The fingerprint is REQUIRED at claim time (QA finding 6): without it the
+  // multi-account gate is trivially bypassed. The PWA always sends X-Device-Fp.
   const fpHeader = c.req.header('x-device-fp');
+  if (!fpHeader) {
+    await recordSignal(db, user.id, 'missing_device_fp', 'low', {});
+    return fail(c, 'device_required', 'A device identifier is required to claim videos.', 403);
+  }
   let deviceFp: string | null = null;
   if (fpHeader) {
     deviceFp = await sha256Hex(fpHeader);
@@ -410,9 +416,11 @@ app.post('/payouts', async (c: AppContext) => {
   const destination: PayoutDestination = destCheck.normalized!;
   const destinationHash = await sha256Hex(JSON.stringify(destination));
 
-  // Idempotency: same key → return existing payout.
+  // Idempotency: same key → return existing payout. Scoped to the requesting
+  // user: a client-chosen UUID must never collide across users (QA 2026-10-09:
+  // user B replaying user A's key was handed A's payout id + status).
   const existing = await queryOne<{ id: string; status: string }>(
-    db, 'SELECT id, status FROM payouts WHERE idempotency_key = ?', idempotency_key);
+    db, 'SELECT id, status FROM payouts WHERE idempotency_key = ? AND user_id = ?', idempotency_key, user.id);
   if (existing) {
     return ok(c, { payout: { id: existing.id, status: existing.status }, deduped: true });
   }

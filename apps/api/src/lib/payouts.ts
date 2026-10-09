@@ -2,6 +2,7 @@
 // adapters — swapping at gate 2 means implementing this interface, nothing else.
 // ALL adapters here are MOCK: they simulate success/failure, move no real money.
 import { randomTokenHex } from './crypto.js';
+import { maskPhone } from './http.js';
 import { getConfigNum, getConfig } from './config.js';
 import type { DbAdapter } from './db.js';
 
@@ -138,7 +139,12 @@ export function getPayoutAdapter(db: DbAdapter, method: PayoutMethod): PayoutAda
 }
 
 export function redactDestination(dest: PayoutDestination): PayoutDestination {
-  const out: PayoutDestination = { label: dest.label };
+  // The label for mpesa/airtime IS the raw E164 number — mask it too, or the
+  // "redaction" is defeated (QA 2026-10-09: full number visible in API).
+  const rawLabel = typeof dest.label === 'string' ? dest.label : '';
+  const out: PayoutDestination = {
+    label: /^\+\d{7,15}$/.test(rawLabel) ? maskPhone(rawLabel) : rawLabel,
+  };
   for (const [k, v] of Object.entries(dest)) {
     if (k === 'label') continue;
     out[k] = typeof v === 'string' && v.length > 4 ? `••${v.slice(-4)}` : '[redacted]';

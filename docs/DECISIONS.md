@@ -156,3 +156,15 @@ Eva is AFK. I made reasonable calls so the build never blocks; each is recorded 
 ### 33. Completion race: guarded flip; tiny crash window documented
 - **Decision:** `completeSession` posts the idempotent ledger group first, then a guarded `UPDATE … WHERE status='active'` flip; only the flip winner applies campaign spend/assignment/daily aggregates. Concurrent completes all return the same receipt; spend is applied exactly once.
 - **Known edge:** a process crash between the flip and the spend batch would under-count `campaigns.spent_cents` by one view (pacing drift only — the ledger, the source of truth for money, is always correct). Accepted: the window is a single statement boundary in one process.
+
+### 34. Advertisers cannot watch their own campaigns (QA finding 5 — coordinator close-out)
+- **Decision:** `nextOffer` excludes campaigns where `c.advertiser_id = user.id`.
+- **Reasoning:** self-watch moves own escrow to self minus the platform spread — no direct theft, but it inflates the view/completion stats advertisers pay for. One-line exclusion; no legitimate use case for self-watch.
+
+### 35. Device fingerprint required at claim time (QA finding 6 — coordinator close-out)
+- **Decision:** `POST /assignments/:id/claim` rejects requests without `x-device-fp` (403 `device_required`, low-severity signal recorded). Signup stays fingerprint-optional for UX.
+- **Reasoning:** the 1:1 device gate never fired when clients simply omitted the fingerprint — "optional" made the control trivially bypassable rather than merely circumventable. The PWA always sends the header; only raw API clients are affected, which is the point. A forged fingerprint is still possible (client-asserted), so this is defense-in-depth alongside velocity caps and manual payout review, not a complete fix.
+
+### 36. Upload size verified at confirm; media probing stays human-gated (QA finding 4 — coordinator close-out, partial)
+- **Decision:** `POST /videos/:id/confirm` now rejects when stored bytes ≠ declared `size_bytes` (422 `size_mismatch`), closing the storage-abuse vector (lying about size to bypass `max_upload_bytes`). Duration/container/dimension claims remain client-asserted.
+- **Reasoning:** size is verifiable portably via R2 `head()` (real R2 and the local fs shim both support it). True media probing (ffprobe) cannot run in Cloudflare Workers, so there is no portable technical control for duration validity — the human admin review (every video is `in_review` before it goes live) remains the gate at gate-0/1 scale. Revisit with an async probe worker (e.g. a container/VM job) before gate 2.

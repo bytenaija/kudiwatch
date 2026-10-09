@@ -156,16 +156,27 @@ export async function validateHeartbeat(
     return reject('bad_rate', { type: 'rate_change', severity: 'medium', details: { rate: input.playback_rate } });
   }
 
-  // 4. Position continuity: [last-1.0, last + elapsed*1.25 + 2.0 + buffering].
+  // 4. Position continuity: [last-1.0, last + elapsed*1.25 + 2.0].
+  // SECURITY: client-declared buffering_s NEVER expands this window. Buffering
+  // means the video stalled, so position must not advance during it; letting
+  // the client inflate the window allowed whole-video seeks in 1-2 beats
+  // (QA adversarial 2026-10-09: 75 s "watched" in ~11 s via buffering_s=120).
+  // Buffering still extends the wall-clock bound via total_buffering_s below.
   const elapsed = session.last_hb_ts == null ? 10 : Math.max(0, serverTs - session.last_hb_ts);
   const buffering = Math.max(0, Math.min(120, input.buffering_s ?? 0));
   const lo = session.last_position_s - 1.0;
-  const hi = session.last_position_s + elapsed * 1.25 + 2.0 + buffering;
+  const hi = session.last_position_s + elapsed * 1.25 + 2.0;
   if (!(input.position_s >= lo && input.position_s <= hi) || !Number.isFinite(input.position_s)) {
     return reject('jump', {
       type: 'position_jump', severity: 'high',
       details: { position_s: input.position_s, last: session.last_position_s, elapsed, window: [lo, hi] },
     });
+  }
+  // Contradictory claim: heavy buffering while the position advanced at full
+  // speed. Not a reject (cheap Androids misreport), but a fraud signal.
+  if (buffering > elapsed * 2 && input.position_s > session.last_position_s + elapsed * 1.25 + 2.0 - 0.001) {
+    await recordSignal(db, session.user_id, 'buffering_anomaly', 'low',
+      { buffering_s: buffering, elapsed_s: elapsed, position_s: input.position_s }, session.id);
   }
 
   // 5. Beat frequency: >1 heartbeat per 5 s per session → reject (scripted over-beat).
@@ -190,6 +201,11 @@ export async function validateHeartbeat(
   ).bind(input.seq, input.position_s, serverTs, JSON.stringify(merged), pct, buffering, session.id).run();
 
   // Uniform-beat detection: stddev of inter-arrival < 300 ms over >= 10 beats → metronome bot.
+  // NOTE (QA adversarial 2026-10-09): server_ts is second-resolution, so an
+  // honest client with a precise setInterval looks identical to a bot. Record
+  // at most ONE signal per session (dedupe): the account is still flagged for
+  // human review, but we no longer auto-invalidate honest metronomic watchers
+  // on long videos via the 3-medium-signals rule.
   const recent = await db.prepare(
     `SELECT server_ts FROM heartbeats WHERE session_id = ? AND accepted = 1 ORDER BY seq DESC LIMIT 11`
   ).bind(session.id).all<{ server_ts: number }>();
@@ -200,8 +216,13 @@ export async function validateHeartbeat(
     const mean = gaps.reduce((s, g) => s + g, 0) / gaps.length;
     const variance = gaps.reduce((s, g) => s + (g - mean) ** 2, 0) / gaps.length;
     if (Math.sqrt(variance) < 0.3) {
-      await recordSignal(db, session.user_id, 'uniform_heartbeats', 'medium',
-        { stddev_s: Math.sqrt(variance), beats: gaps.length + 1 }, session.id);
+      const dup = await db.prepare(
+        `SELECT 1 FROM fraud_signals WHERE session_id = ? AND signal_type = 'uniform_heartbeats' LIMIT 1`
+      ).bind(session.id).first();
+      if (!dup) {
+        await recordSignal(db, session.user_id, 'uniform_heartbeats', 'medium',
+          { stddev_s: Math.sqrt(variance), beats: gaps.length + 1 }, session.id);
+      }
     }
   }
 

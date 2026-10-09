@@ -46,8 +46,15 @@ export async function requestOtp(
   const ttl = await getConfigNum(db, 'otp_ttl_s');
 
   const last = await db.prepare(
-    'SELECT created_at FROM phone_verifications WHERE phone_e164 = ? AND consumed_at IS NULL ORDER BY created_at DESC LIMIT 1'
-  ).bind(phoneE164).first<{ created_at: number }>();
+    'SELECT created_at, locked_until FROM phone_verifications WHERE phone_e164 = ? AND consumed_at IS NULL ORDER BY created_at DESC LIMIT 1'
+  ).bind(phoneE164).first<{ created_at: number; locked_until: number | null }>();
+  // A brute-force lock binds the PHONE, not the code row: without this, the
+  // 1 h lock evaporated as soon as a fresh code was issued after the 60 s
+  // resend cooldown (QA adversarial 2026-10-09). Locked phones get no new
+  // code until the lock expires; the response stays always-200.
+  if (last?.locked_until && last.locked_until > now) {
+    return { ok: true, resendAfterSec: last.locked_until - now };
+  }
   if (last && now - last.created_at < cooldown) {
     return { ok: true, resendAfterSec: cooldown - (now - last.created_at) };
   }
