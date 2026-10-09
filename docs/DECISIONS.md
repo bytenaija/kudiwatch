@@ -116,3 +116,43 @@ Eva is AFK. I made reasonable calls so the build never blocks; each is recorded 
 - **Gate-1 data** (completion rate, fraud-signal rates, payout-queue load) is the scheduled moment to revisit #3, #4, #5, #20, #22.
 - **Gate 2** (real money) forces #2 (FX), #8 (ID verification), #10 (auto-approve rules), #14 (real PSP), #18 (TOTP).
 - Everything else stands until a concrete failure says otherwise.
+
+---
+
+## Implementation-stage resolutions (2026-10-09, founder AFK — DESIGN.md §12)
+
+### 25. Earnings display currency: USD-only at MVP; local estimate only on the payout screen
+- **Decision:** balances, earnings, and receipts stay USD-only everywhere. The payout screen shows a per-method local-currency *estimate* in small muted text, labeled "Demo estimate — not a real rate" (mock FX table, never touches the ledger).
+- **Reasoning:** mock FX on the earnings screen would teach watchers wrong numbers they'd anchor on; but at the payout edge a local estimate answers "what does $2.50 mean for me" without implying a real rate. Revisit with real FX at gate 2 (see #2).
+
+### 26. Attention-check copy tone: "Quick check — are you still watching?"
+- **Decision:** adopt the mockup's line verbatim for the tap check ("Quick check — are you still watching?" + "I'm watching" button, "Answer within 15 seconds to keep earning.").
+- **Reasoning:** neutral-polite beat brand-voice here — the check interrupts a video; warmth reduces the feeling of being policed. COPY.md already carried this line; locking it.
+
+### 27. Failed-watch second chance: failed watches don't consume the per-user cap
+- **Decision:** any watch that leaves `active` without completing (attention fail/timeout, under-watched, fraud invalidation, silence expiry) flips its assignment to `expired`, freeing the campaign for re-offer. Only `completed` assignments count toward `per_user_cap`.
+- **Reasoning:** punishing a failed watch with a permanent lockout feels scammy and contradicts the "calm, clear credit" principle; the design mockup already promised a second chance without ledger changes, and this needs none (no credit was posted). Implemented in `abandonSession()` (`lib/verify.ts`).
+
+### 28. Admin console: desktop-first, responsive — payout approval works on phones
+- **Decision:** desktop-first tables that collapse to card lists under 720px; approve/reject are full-width reachable buttons on mobile. No separate mobile admin app.
+- **Reasoning:** payout approval is the time-critical admin action and admins may need it on the go; the queue is a short list, not a dense dashboard, so responsive collapse is enough at MVP. Revisit if the queue grows past ~50/day.
+
+### 29. Local runtime: Node adapter (node:sqlite + fs R2 shim), not miniflare
+- **Decision:** the Worker code is written Cloudflare-portable (no Node APIs in `src/`, `wrangler.toml` + D1/R2 production bindings ship), but local dev runs under `@hono/node-server` with `node:sqlite` and a filesystem R2 shim. No Cloudflare account, no spend, `npm run dev` just works.
+- **Reasoning:** miniflare/D1-local would also work but adds wrangler as a heavy dependency and still needs the same shims for R2/SMTP; the Node adapter is one small file, starts in seconds, and the D1 SQL stays portable (no `RETURNING`, positional binds). Deviation recorded; the Workers entrypoint (`src/workers.ts`) is the deploy path.
+
+### 30. Ledger: per-account normal side (debit-normal mock-funding receivable)
+- **Decision:** `ledger_accounts.normal_side` (`credit` default, `debit` for `clearing:mock-funding`); deltas are signed by normal side, non-negativity enforced on the normal balance.
+- **Reasoning:** mock advertiser top-ups are outside money entering the system. Booking them as debit-receivable/credit-wallet keeps double-entry clean with no negative balances, and the receivable balance visibly shows how much "demo money" is outstanding. No behavior change for user/campaign/clearing accounts.
+
+### 31. Frontend: build-free static HTML/JS instead of Vite+React
+- **Decision:** the three surfaces (`/app`, `/advertise`, `/admin`) ship as static HTML + vanilla JS served from `apps/web/public/` (Pages-compatible as-is, no build step).
+- **Reasoning:** zero-build keeps the local loop instant and the PWA JS far under the 300 KB budget; the design system (DESIGN.md) is component CSS, not framework-dependent. A Vite build can be reintroduced if bundle-splitting becomes necessary; the API contract is unchanged.
+
+### 32. payouts.amount_cents table CHECK relaxed to > 0 (migration 0003)
+- **Decision:** the `>= 100` CHECK from the deepdive schema is relaxed to `> 0`; the $1.00 minimum is enforced in app code via the tunable `config.min_payout_cents`.
+- **Reasoning:** the deepdive also says the min is config-tunable ("min $1.00, enforced in schema" + admin config editor). A hardcoded table CHECK made the config a lie — QA/E2E can't exercise payouts below $1.00 without it. The product rule is unchanged ($1.00 default); only the enforcement layer moved.
+
+### 33. Completion race: guarded flip; tiny crash window documented
+- **Decision:** `completeSession` posts the idempotent ledger group first, then a guarded `UPDATE … WHERE status='active'` flip; only the flip winner applies campaign spend/assignment/daily aggregates. Concurrent completes all return the same receipt; spend is applied exactly once.
+- **Known edge:** a process crash between the flip and the spend batch would under-count `campaigns.spent_cents` by one view (pacing drift only — the ledger, the source of truth for money, is always correct). Accepted: the window is a single statement boundary in one process.

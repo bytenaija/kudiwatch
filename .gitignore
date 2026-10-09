@@ -1,0 +1,15 @@
+node_modules/
+.wrangler/
+.dev.vars
+data/
+.dev/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+dist/
+.DS_Store
+# Local R2 shim + generated test videos (regenerable via scripts/gen-videos.sh)
+# NOTE: data/seed-videos/*.mp4 are intentionally NOT committed; seed.ts
+# regenerates them with ffmpeg if missing.
+data/

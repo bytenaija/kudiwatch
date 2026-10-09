@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Videos for you — KudiWatch</title>
+<link rel="stylesheet" href="/css/kw.css">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0b6e4f">
+</head>
+<body>
+<div class="wrap" id="app">
+  <h1>Videos for you</h1>
+  <p class="small">Watch a video fully to earn. Skipped or half-watched videos pay nothing.</p>
+  <div id="meter"></div>
+  <div id="list"></div>
+  <div id="empty" hidden></div>
+</div>
+<script src="/js/kw.js"></script>
+<script>
+(async function () {
+  KW.topbar('Videos for you');
+  KW.tabbar('videos');
+  KW.mockBanner();
+  KW.offlineBar();
+  let me;
+  try { me = await KW.requireAuth(); }
+  catch (e) { document.getElementById('app').innerHTML = `<div class="banner err">${KW.esc(e.message)}</div>`; return; }
+
+  async function load() {
+    const list = document.getElementById('list');
+    const empty = document.getElementById('empty');
+    list.innerHTML = '<p class="small">Loading videos…</p>';
+    empty.hidden = true;
+    try {
+      const data = await KW.api('GET', '/v1/feed/next');
+      if (!data.assignment) {
+        list.innerHTML = '';
+        empty.hidden = false;
+        empty.innerHTML = `
+          <div class="empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/></svg>
+            <h3>No videos right now.</h3>
+            <p>${KW.esc(data.message || 'Check back soon.')}</p>
+            <button class="btn secondary" id="again">Check again</button>
+          </div>`;
+        document.getElementById('again').addEventListener('click', load);
+        return;
+      }
+      const a = data.assignment, v = data.video, cp = data.campaign;
+      const mins = Math.max(1, Math.ceil((a.claim_deadline - Date.now() / 1000) / 60));
+      list.innerHTML = `
+        <div class="video-card">
+          <div class="thumb" aria-hidden="true">
+            <span>${KW.esc(cp.title)}</span>
+            <span class="dur">${Math.floor(v.duration_s / 60)}:${String(Math.floor(v.duration_s % 60)).padStart(2, '0')}</span>
+          </div>
+          <div class="body">
+            <div class="between">
+              <h3 style="margin:0">${KW.esc(cp.title)}</h3>
+              <span class="pay-pill" aria-label="Pays ${cp.price_per_view_cents} cents per completed watch">+$${(cp.price_per_view_cents / 100).toFixed(2)}</span>
+            </div>
+            <p class="small">Paid ad by ${KW.esc(cp.advertiser)} · offer expires in ~${mins} min</p>
+            <div class="row">
+              <button class="btn primary" id="watch" style="flex:1">Watch</button>
+              <button class="btn ghost" id="skip">Skip</button>
+            </div>
+          </div>
+        </div>`;
+      document.getElementById('watch').addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        KW.setBusy(btn, true, 'Starting…');
+        try {
+          const claim = await KW.api('POST', `/v1/assignments/${a.id}/claim`, {});
+          sessionStorage.setItem('kw_claim', JSON.stringify(claim));
+          location.href = `/app/watch.html?sid=${claim.session_id}`;
+        } catch (err) { KW.showError(err.message, err.requestId); KW.setBusy(btn, false); }
+      });
+      document.getElementById('skip').addEventListener('click', () => skipSheet(a.id));
+    } catch (e) { KW.showError(e.message, e.requestId); }
+  }
+
+  function skipSheet(assignmentId) {
+    const scrim = document.createElement('div');
+    scrim.className = 'sheet-scrim';
+    scrim.innerHTML = `
+      <div class="sheet" role="dialog" aria-modal="true" aria-label="Skip video">
+        <div class="grab"></div>
+        <h3>Skip this video?</h3>
+        <p>Skipped videos can come back after 24 hours. You won't earn for this one.</p>
+        <button class="btn secondary" id="keep" style="width:100%;margin-bottom:8px">Keep watching</button>
+        <button class="btn danger" id="dos">Skip video — no earnings</button>
+      </div>`;
+    document.body.appendChild(scrim);
+    scrim.querySelector('#keep').addEventListener('click', () => scrim.remove());
+    scrim.addEventListener('click', (e) => { if (e.target === scrim) scrim.remove(); });
+    scrim.querySelector('#dos').addEventListener('click', async (e) => {
+      KW.setBusy(e.currentTarget, true, 'Skipping…');
+      try { await KW.api('POST', `/v1/assignments/${assignmentId}/skip`, {}); scrim.remove(); load(); }
+      catch (err) { KW.showError(err.message, err.requestId); }
+    });
+  }
+
+  // Daily meter from wallet stats.
+  try {
+    const w = await KW.api('GET', '/v1/wallet');
+    document.getElementById('meter').innerHTML = `
+      <div class="card" style="margin-top:0">
+        <div class="between"><strong>${w.views_today} of ${w.max_views_per_day} videos today</strong><span class="money">${KW.money(w.balance_cents)}</span></div>
+        <p class="small" style="margin:4px 0 0">Daily limit keeps earning fair for everyone.</p>
+      </div>`;
+  } catch { /* non-fatal */ }
+
+  load();
+})();
+</script>
+</body>
+</html>
