@@ -1,5 +1,6 @@
 # KudiWatch API — Cloudflare Worker (Hono)
 name = "kudiwatch-api"
+account_id = "afc92595c65e7247ad546cc945893d2f" # bytenaija (dev) account; token holds 2 accounts
 main = "src/workers.ts"
 compatibility_date = "2026-10-01"
 
@@ -17,6 +18,30 @@ ENV_NAME = "prod"
 # [[r2_buckets]]
 # binding = "R2"
 # bucket_name = "kw-videos"
+
+# --- Staging (testing): kudiwatch-staging D1 + kw-videos-staging R2, web PWA served
+# from the worker via Static Assets (same-origin /v1/* API). Deploy with:
+#   wrangler --env staging deploy
+[env.staging]
+name = "kudiwatch-api-staging"
+
+[env.staging.vars]
+ENV_NAME = "staging"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "kudiwatch-staging"
+database_id = "6fbfeec7-9447-4b8e-be7c-0e80f82c73c1"
+migrations_dir = "../../db/migrations"
+
+[[env.staging.r2_buckets]]
+binding = "R2"
+bucket_name = "kw-videos-staging"
+
+[env.staging.assets]
+directory = "../web/public"
+binding = "ASSETS"
+run_worker_first = ["/v1/*"]
 
 [dev]
 port = 8787
