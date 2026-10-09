@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KudiWatch — Admin console (mockup)</title>
+<style>
+:root{
+--bg:#ffffff;--surface:#f2f6f3;--card:#ffffff;--ink:#101814;--ink2:#33403a;--muted:#57665e;
+--line:#dde6e0;--primary:#0b6e4f;--primary-deep:#095c42;--onp:#ffffff;
+--gold:#8a5a00;--gold-bg:#faf3df;--danger:#b3261e;--danger-bg:#fdecea;
+--warn-bg:#fff4d6;--warn-ink:#6b4a00;--info:#1d5fa8;--info-bg:#e7f0fb;--ok-bg:#e6f4ec;
+--radius:12px;--tap:48px;
+--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+--mono:ui-monospace,SFMono-Regular,"Roboto Mono",Menlo,Consolas,monospace;
+}
+@media(prefers-color-scheme:dark){
+:root{--bg:#0d1310;--surface:#151e19;--card:#182420;--ink:#eaf3ed;--ink2:#c4d4ca;--muted:#9db3a7;
+--line:#27352d;--primary:#43d18f;--primary-deep:#43d18f;--onp:#06251a;
+--gold:#e8b93c;--gold-bg:#2b230d;--danger:#ff8a80;--danger-bg:#3a1714;
+--warn-bg:#33270a;--warn-ink:#f2cd6b;--info:#7fb3ef;--info-bg:#12283f;--ok-bg:#123326;}
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:#0a0f0c;color:var(--ink);font-size:16px;line-height:1.5}
+.pv{background:repeating-linear-gradient(45deg,#1c2420,#1c2420 12px,#242e28 12px,#242e28 24px);color:#fff;font-size:11px;padding:7px 10px;display:flex;gap:6px;align-items:center;overflow-x:auto;white-space:nowrap}
+.pv b{letter-spacing:.08em;color:#ffd97a}.pv a{color:#9fd8bb;text-decoration:none}.pv a.on{color:#fff;font-weight:700;text-decoration:underline}
+.shell{max-width:1020px;margin:0 auto;background:var(--bg);min-height:calc(100vh - 31px)}
+@media(min-width:520px){body{padding:24px 12px}.shell{border-radius:20px;overflow:hidden}.pv{max-width:1020px;margin:0 auto;border-radius:12px 12px 0 0}}
+.wrap{padding:20px 20px 48px}
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.mark{width:34px;height:34px;border-radius:10px;background:var(--primary);display:grid;place-items:center;color:var(--onp);font-weight:800;font-size:18px}
+.brandname{font-weight:800;font-size:18px}.brandname small{font-weight:400;color:var(--muted);font-size:13px}
+h1{font-size:24px;margin:14px 0 4px}
+.reauth{background:var(--warn-bg);color:var(--warn-ink);border-radius:var(--radius);padding:12px 14px;font-size:14px;margin:12px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin:8px 0 18px;overflow-x:auto}
+.tabs button{border:0;background:none;font-family:var(--font);font-size:15px;font-weight:600;color:var(--muted);padding:12px 14px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;min-height:48px}
+.tabs button.on{color:var(--primary-deep);border-bottom-color:var(--primary)}
+.count{background:var(--warn-bg);color:var(--warn-ink);border-radius:999px;font-size:12px;padding:1px 8px;margin-left:4px;font-weight:700}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border:0;border-radius:10px;font-size:15px;font-weight:700;font-family:var(--font);cursor:pointer;text-decoration:none;padding:0 16px}
+.btn-primary{background:var(--primary);color:var(--onp)}
+.btn-secondary{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.btn-danger{background:var(--danger-bg);color:var(--danger)}
+.btn-ghost{background:transparent;color:var(--primary-deep);font-size:14px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:10px 8px;border-bottom:2px solid var(--line);white-space:nowrap}
+td{padding:12px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);margin-bottom:16px}
+.num{font-variant-numeric:tabular-nums;font-weight:700}
+.mono{font-family:var(--mono);font-size:12px}
+.mut{color:var(--muted);font-size:13px}
+.chip{font-size:11px;font-weight:700;border-radius:999px;padding:4px 10px;white-space:nowrap}
+.chip.warn{background:var(--warn-bg);color:var(--warn-ink)}.chip.ok{background:var(--ok-bg);color:var(--primary-deep)}
+.chip.bad{background:var(--danger-bg);color:var(--danger)}.chip.info{background:var(--info-bg);color:var(--info)}
+.chip.neu{background:var(--surface);color:var(--muted)}
+.sev{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}
+.sev.high{background:var(--danger)}.sev.med{background:var(--gold)}.sev.low{background:var(--info)}
+.rowact{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+.card h3{font-size:16px}
+.cfg{display:grid;gap:0;max-width:640px}
+.cfg .frow{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.cfg label{flex:1;font-size:15px}.cfg label small{display:block;color:var(--muted);font-size:12px}
+.cfg input{width:130px;height:48px;border:1.5px solid var(--line);border-radius:10px;font-size:16px;padding:0 12px;font-family:var(--font);font-variant-numeric:tabular-nums;background:var(--card);color:var(--ink);text-align:right}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+.sheet{background:var(--card);border-radius:16px 16px 0 0;padding:14px 18px 28px;max-width:480px;width:100%}
+.sheet .grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 14px}
+.sheet h2{font-size:18px;margin-bottom:8px}
+textarea{width:100%;min-height:88px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;font-family:var(--font);padding:10px 12px;background:var(--card);color:var(--ink);margin:8px 0}
+.hidden{display:none!important}
+.diff{font-family:var(--mono);font-size:12px;background:var(--surface);border-radius:8px;padding:8px 10px;margin-top:6px;white-space:pre-wrap}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="pv"><b>DESIGN PREVIEW</b><a href="index.html">Hub</a>·<a href="watcher-signup.html">Signup</a>·<a href="watcher-queue.html">Queue</a>·<a href="watcher-player.html">Player</a>·<a href="watcher-earnings.html">Earnings</a>·<a href="watcher-payout.html">Payout</a>·<a href="advertiser-dashboard.html">Advertiser</a>·<a href="admin-console.html" class="on">Admin</a></div>
+<div class="shell"><div class="wrap">
+<div class="topbar"><div class="mark">K</div><div class="brandname">KudiWatch <small>admin</small></div></div>
+<h1>Review console</h1>
+<div class="reauth" role="note"><span>⚠ Your session is older than 12 hours. <b>Re-verify to decide payouts.</b></span><button class="btn btn-secondary" style="min-height:40px" onclick="this.textContent='Code sent (demo: 482916)';this.disabled=true">Send me a code</button></div>
+
+<div class="tabs" role="tablist">
+<button class="on" data-t="payouts" role="tab">Payouts <span class="count">3</span></button>
+<button data-t="videos" role="tab">Videos <span class="count">2</span></button>
+<button data-t="accounts" role="tab">Flagged accounts <span class="count">2</span></button>
+<button data-t="config" role="tab">Config</button>
+<button data-t="audit" role="tab">Audit log</button>
+</div>
+
+<!-- PAYOUTS -->
+<section id="tab-payouts">
+<div class="tblwrap"><table>
+<thead><tr><th>Amount</th><th>Method → destination</th><th>Account context</th><th>Requested</th><th>Decision</th></tr></thead><tbody>
+<tr><td class="num">$2.50</td><td>M-Pesa<br><span class="mono mut">+234 8•• ••• 5678</span></td>
+<td>12 days old · 34 completions/day<br><span class="mut">0 open signals</span></td><td class="mut">3:02 PM<br><span class="mono">po_1a…</span></td>
+<td><div class="rowact"><button class="btn btn-primary" onclick="decide('approve','$2.50')">Approve $2.50</button><button class="btn btn-danger" onclick="decide('reject','$2.50')">Reject…</button></div></td></tr>
+<tr><td class="num">$12.00</td><td>USDT · TRC20<br><span class="mono mut">T9fK…x2Qm</span></td>
+<td>3 days old · 48 completions/day<br><span class="sev med"></span><span class="mut">2 signals · velocity_exceeded</span></td><td class="mut">1:47 PM<br><span class="mono">po_2b…</span></td>
+<td><div class="rowact"><button class="btn btn-primary" onclick="decide('approve','$12.00')">Approve $12.00</button><button class="btn btn-danger" onclick="decide('reject','$12.00')">Reject…</button></div></td></tr>
+<tr><td class="num">$1.20</td><td>Airtime<br><span class="mono mut">+254 7•• ••• 210</span></td>
+<td>30 days old · 9 completions/day<br><span class="mut">0 open signals</span></td><td class="mut">11:15 AM<br><span class="mono">po_3c…</span></td>
+<td><div class="rowact"><button class="btn btn-primary" onclick="decide('approve','$1.20')">Approve $1.20</button><button class="btn btn-danger" onclick="decide('reject','$1.20')">Reject…</button></div></td></tr>
+</tbody></table></div>
+<p class="mut">Approving moves a payout to <span class="mono">approved</span>; the 5-minute cron then sends it via the mock adapter. Nothing is automatic at MVP.</p>
+</section>
+
+<!-- VIDEOS -->
+<section id="tab-videos" class="hidden">
+<div class="card"><h3>infinix-teaser-final.mp4</h3><p class="mut">0:45 · 9.1 MB · Infinix Nigeria · uploaded Sep 29 · advertiser history: 3 campaigns, 0 rejections</p>
+<div class="rowact"><button class="btn btn-primary" onclick="alert('Demo: video approved.')">Approve</button><button class="btn btn-danger" onclick="vdecide()">Reject…</button></div></div>
+<div class="card"><h3>crypto-doubler-ad.mp4</h3><p class="mut">0:30 · 6.0 MB · BrightWin Ltd · uploaded Oct 7 · advertiser history: 0 campaigns, 1 rejection</p>
+<div class="rowact"><button class="btn btn-primary" onclick="alert('Demo: video approved.')">Approve</button><button class="btn btn-danger" onclick="vdecide()">Reject…</button></div></div>
+</section>
+
+<!-- ACCOUNTS -->
+<section id="tab-accounts" class="hidden">
+<div class="tblwrap"><table>
+<thead><tr><th>User</th><th>Signals (7d)</th><th>Status</th><th>Action</th></tr></thead><tbody>
+<tr><td><b>+234 803 ••• 1122</b><br><span class="mut">Adaeze · 21 days old</span></td>
+<td><span class="sev med"></span>uniform_heartbeats ×4<br><span class="sev low"></span>seq_gap ×9</td>
+<td><span class="chip warn">FLAGGED</span></td>
+<td><div class="rowact"><button class="btn btn-secondary" onclick="flag('warn')">Warn</button><button class="btn btn-secondary" onclick="flag('suspend')">Suspend</button><button class="btn btn-danger" onclick="flag('ban')">Ban</button></div></td></tr>
+<tr><td><b>+254 722 ••• 8890</b><br><span class="mut">Kamau · 6 days old</span></td>
+<td><span class="sev high"></span>multi_account_device (4 accounts)<br><span class="sev med"></span>velocity_exceeded</td>
+<td><span class="chip warn">FLAGGED</span></td>
+<td><div class="rowact"><button class="btn btn-secondary" onclick="flag('warn')">Warn</button><button class="btn btn-secondary" onclick="flag('suspend')">Suspend</button><button class="btn btn-danger" onclick="flag('ban')">Ban</button></div></td></tr>
+</tbody></table></div>
+<p class="mut">Suspend/ban blocks claims and payouts immediately. Every action is written to the audit log.</p>
+</section>
+
+<!-- CONFIG -->
+<section id="tab-config" class="hidden">
+<div class="card" style="max-width:680px"><h3>Rates, caps &amp; thresholds</h3><p class="mut">Changes apply immediately — no redeploy.</p>
+<div class="cfg" style="margin-top:8px">
+<div class="frow"><label>completion_pct <small>Watch % needed to earn (0–1)</small></label><input type="number" value="0.90" step="0.01" min="0" max="1"></div>
+<div class="frow"><label>min_payout_cents <small>Minimum payout, USD cents</small></label><input type="number" value="100" min="1"></div>
+<div class="frow"><label>heartbeat_interval_s <small>Seconds between watch heartbeats</small></label><input type="number" value="10" min="5"></div>
+<div class="frow"><label>max_views_per_hour <small>Completions per watcher per hour</small></label><input type="number" value="10" min="1"></div>
+<div class="frow"><label>max_views_per_day <small>Completions per watcher per day</small></label><input type="number" value="50" min="1"></div>
+<div class="frow"><label>payout_mock_failure_rate <small>0 = never fail (QA: set 0.3 for retries)</small></label><input type="number" value="0" step="0.1" min="0" max="1"></div>
+</div>
+<div style="margin-top:14px"><button class="btn btn-primary" onclick="alert('Demo: config saved — no redeploy needed.')">Save config</button></div>
+</div></section>
+
+<!-- AUDIT -->
+<section id="tab-audit" class="hidden">
+<p class="mut" style="margin-bottom:10px">Every admin action is recorded here, permanently.</p>
+<div class="tblwrap"><table>
+<thead><tr><th>When</th><th>Admin</th><th>Action</th><th>Change</th></tr></thead><tbody>
+<tr><td class="mut">Oct 8, 2:40 PM</td><td class="mono">ad_min</td><td><span class="chip info">payout.decide</span> <span class="mono">po_9x…</span></td><td><div class="diff">status: pending_review → approved
+note: "matches history, OK"</div></td></tr>
+<tr><td class="mut">Oct 8, 1:05 PM</td><td class="mono">ad_min</td><td><span class="chip info">video.review</span> <span class="mono">vid_44…</span></td><td><div class="diff">status: in_review → rejected
+reason: "get-rich promise"</div></td></tr>
+<tr><td class="mut">Oct 7, 6:22 PM</td><td class="mono">ad_min</td><td><span class="chip info">account.flag</span> <span class="mono">u_71…</span></td><td><div class="diff">action: warn
+reason: "uniform heartbeats, first offense"</div></td></tr>
+<tr><td class="mut">Oct 7, 9:00 AM</td><td class="mono">ad_min</td><td><span class="chip info">config.set</span></td><td><div class="diff">max_views_per_day: 40 → 50</div></td></tr>
+</tbody></table></div>
+</section>
+
+</div></div>
+
+<!-- DECISION SHEET -->
+<div class="scrim hidden" id="sheet">
+<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sht">
+<div class="grab"></div>
+<h2 id="sht">Reject payout</h2>
+<p class="mut" id="shsub">Reject payout — <b>$2.50</b> returns to the watcher.</p>
+<label for="note" style="font-size:14px;font-weight:600">Reason (the watcher will see this)</label>
+<textarea id="note" placeholder="e.g. Destination number doesn't match the verified phone."></textarea>
+<button class="btn btn-danger" id="go" style="width:100%">Reject payout</button>
+<button class="btn btn-ghost" id="back" style="width:100%">Back</button>
+</div></div>
+
+<script>
+const tabs=[...document.querySelectorAll('.tabs button')];
+function showTab(t){tabs.forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+['payouts','videos','accounts','config','audit'].forEach(k=>document.getElementById('tab-'+k).classList.toggle('hidden',k!==t));window.scrollTo(0,0);}
+tabs.forEach(b=>b.onclick=()=>showTab(b.dataset.t));
+let pending=null;
+function decide(kind,amt){pending={kind,amt};
+document.getElementById('sht').textContent=kind==='approve'?'Approve payout':'Reject payout';
+document.getElementById('shsub').innerHTML=kind==='approve'
+?'Approving moves <b>'+amt+'</b> to <span class="mono">approved</span>. The cron sends it next run. Destination is locked — verify it matches.':"Reject payout — <b>"+amt+"</b> returns to the watcher's balance.";
+document.getElementById('go').textContent=kind==='approve'?'Approve '+amt:'Reject payout';
+document.getElementById('go').className='btn '+(kind==='approve'?'btn-primary':'btn-danger');
+document.getElementById('note').placeholder=kind==='approve'?'Optional note (kept in the audit log).':'e.g. Destination number doesn\'t match the verified phone.';
+document.getElementById('sheet').classList.remove('hidden');}
+function vdecide(){pending={kind:'b reject'};document.getElementById('sht').textContent='Reject video';
+document.getElementById('shsub').innerHTML='The advertiser will see your reason.';document.getElementById('go').textContent='Reject video';
+document.getElementById('go').className='btn btn-danger';document.getElementById('note').placeholder='e.g. Get-rich promises are not allowed.';
+document.getElementById('sheet').classList.remove('hidden');}
+function flag(a){alert('Demo: account '+a+' — written to audit log. Suspend/ban blocks claims + payouts immediately.');}
+document.getElementById('back').onclick=()=>document.getElementById('sheet').classList.add('hidden');
+document.getElementById('go').onclick=()=>{document.getElementById('sheet').classList.add('hidden');
+alert('Demo: decision recorded → audit log. ('+(pending?pending.kind:'')+')');};
+</script>
+</body>
+</html>

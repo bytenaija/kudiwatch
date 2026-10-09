@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KudiWatch — Watch &amp; earn (mockup)</title>
+<style>
+:root{
+--bg:#ffffff;--surface:#f2f6f3;--card:#ffffff;--ink:#101814;--ink2:#33403a;--muted:#57665e;
+--line:#dde6e0;--primary:#0b6e4f;--primary-deep:#095c42;--onp:#ffffff;
+--gold:#8a5a00;--gold-bg:#faf3df;--danger:#b3261e;--danger-bg:#fdecea;
+--warn-bg:#fff4d6;--warn-ink:#6b4a00;--info:#1d5fa8;--ok-bg:#e6f4ec;
+--radius:12px;--tap:48px;
+--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+--mono:ui-monospace,SFMono-Regular,"Roboto Mono",Menlo,Consolas,monospace;
+}
+@media(prefers-color-scheme:dark){
+:root{--bg:#0d1310;--surface:#151e19;--card:#182420;--ink:#eaf3ed;--ink2:#c4d4ca;--muted:#9db3a7;
+--line:#27352d;--primary:#43d18f;--primary-deep:#43d18f;--onp:#06251a;
+--gold:#e8b93c;--gold-bg:#2b230d;--danger:#ff8a80;--danger-bg:#3a1714;
+--warn-bg:#33270a;--warn-ink:#f2cd6b;--info:#7fb3ef;--ok-bg:#123326;}
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:#0a0f0c;color:var(--ink);font-size:16px;line-height:1.5}
+.pv{background:repeating-linear-gradient(45deg,#1c2420,#1c2420 12px,#242e28 12px,#242e28 24px);color:#fff;font-size:11px;padding:7px 10px;display:flex;gap:6px;align-items:center;overflow-x:auto;white-space:nowrap}
+.pv b{letter-spacing:.08em;color:#ffd97a}.pv a{color:#9fd8bb;text-decoration:none}.pv a.on{color:#fff;font-weight:700;text-decoration:underline}
+.phone{max-width:400px;margin:0 auto;background:var(--bg);min-height:calc(100vh - 31px);display:flex;flex-direction:column}
+@media(min-width:480px){body{padding:24px 0}.phone{border-radius:24px;overflow:hidden;box-shadow:0 12px 48px rgba(0,0,0,.45);min-height:min(900px,calc(100vh - 80px))}.pv{max-width:400px;margin:0 auto;border-radius:12px 12px 0 0}}
+.screen{padding:12px 16px 32px;flex:1}
+.backrow{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.backrow a{color:var(--primary-deep);text-decoration:none;font-weight:600;font-size:15px;display:flex;align-items:center;gap:4px;min-height:44px}
+.stage{position:relative;background:#000;border-radius:var(--radius);overflow:hidden;aspect-ratio:16/9}
+.stage canvas{width:100%;height:100%;display:block}
+.bigplay{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.35);border:0;width:100%;cursor:pointer}
+.bigplay span{width:72px;height:72px;border-radius:50%;background:var(--primary);display:grid;place-items:center}
+.bigplay svg{width:32px;height:32px;color:#fff;margin-left:4px}
+.overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(8,12,10,.88);color:#fff;text-align:center;padding:24px}
+.overlay h2{font-size:19px}.overlay p{font-size:14px;color:#cfd8d2;max-width:280px}
+.hidden{display:none!important}
+.transport{display:flex;align-items:center;gap:4px;padding:8px 0}
+.tbtn{width:48px;height:48px;border:0;background:transparent;color:var(--ink);border-radius:10px;display:grid;place-items:center;cursor:pointer}
+.tbtn svg{width:26px;height:26px}
+.time{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;margin:0 4px;white-space:nowrap}
+.lockbadge{margin-left:auto;display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--ink2);background:var(--surface);border:1px solid var(--line);padding:6px 10px;border-radius:999px;white-space:nowrap}
+.lockbadge svg{width:14px;height:14px}
+.segbar{position:relative;height:26px;display:flex;align-items:center;cursor:default}
+.segtrack{position:relative;height:8px;flex:1;background:var(--surface);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.seg{position:absolute;top:0;bottom:0;background:var(--primary)}
+.seg.pending{background:var(--gold);opacity:.55}
+.playhead{position:absolute;top:2px;bottom:2px;width:3px;background:var(--ink);border-radius:2px}
+.seglegend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:2px}
+.seglegend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.vmeta{margin-top:12px}
+.vmeta h1{font-size:18px}
+.vmeta .adv{font-size:13px;color:var(--muted)}
+.earnline{display:flex;align-items:center;gap:8px;margin-top:8px;background:var(--gold-bg);border-radius:10px;padding:10px 12px;font-weight:700;color:var(--gold);font-size:15px}
+.checklist{list-style:none;margin-top:14px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.checklist li{display:flex;gap:10px;align-items:center;padding:11px 12px;font-size:14px;border-bottom:1px solid var(--line)}
+.checklist li:last-child{border-bottom:0}
+.checklist .st{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;flex:none;border:2px solid var(--line);color:transparent;font-size:14px}
+.checklist li.ok .st{background:var(--primary);border-color:var(--primary);color:#fff}
+.checklist li.ok{color:var(--ink2)}
+.checklist li.due .st{border-color:var(--gold)}
+.actions{display:flex;gap:8px;margin-top:14px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;border:0;border-radius:var(--radius);font-size:17px;font-weight:700;font-family:var(--font);cursor:pointer;text-decoration:none;padding:0 16px}
+.btn-primary{background:var(--primary);color:var(--onp);flex:1}
+.btn-ghost{background:transparent;color:var(--primary-deep);min-height:var(--tap);font-size:15px;padding:0 10px}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:20px;z-index:50}
+.modal{background:var(--card);border-radius:16px;padding:22px 18px;max-width:360px;width:100%;text-align:center}
+.modal h2{font-size:19px;margin:10px 0 6px}
+.modal p{font-size:14px;color:var(--ink2);margin-bottom:14px}
+.ring{width:84px;height:84px;margin:0 auto}
+.qopts{text-align:left;margin:0 0 14px}
+.qopts label{display:flex;gap:10px;align-items:center;min-height:52px;border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;margin:8px 0;font-size:15px;cursor:pointer}
+.qopts input{width:22px;height:22px;accent-color:var(--primary);flex:none}
+.sheetwrap{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+.sheet{background:var(--card);border-radius:16px 16px 0 0;padding:14px 18px 28px;max-width:400px;width:100%}
+.sheet .grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 14px}
+.sheet h2{font-size:18px;margin-bottom:6px}.sheet p{font-size:14px;color:var(--ink2);margin-bottom:16px}
+.credit{background:var(--card);border:2px solid var(--primary);border-radius:16px;padding:24px 18px;text-align:center;margin-top:14px}
+.credit .amt{font-size:40px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
+.credit .amt.flash{animation:flash 1.2s}
+@keyframes flash{0%{text-shadow:0 0 0 transparent}30%{text-shadow:0 0 24px var(--gold)}100%{text-shadow:0 0 0 transparent}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.credit p{font-size:14px;color:var(--ink2);margin:8px 0 16px}
+details.debug{margin-top:18px;font-size:13px;border:1px dashed var(--line);border-radius:10px;padding:10px 12px;color:var(--muted)}
+details.debug summary{cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center}
+#hblog{font-family:var(--mono);font-size:12px;white-space:pre-wrap;margin-top:8px;max-height:140px;overflow:auto}
+.demoshort{margin-top:16px;border-top:1px dashed var(--line);padding-top:10px}
+.demoshort p{font-size:12px;color:var(--muted);margin-bottom:6px}
+.demoshort .row{display:flex;gap:8px;flex-wrap:wrap}
+.demobtn{font-size:13px;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);cursor:pointer;font-family:var(--font);min-height:44px}
+button:focus-visible,a:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+.failcard{background:var(--danger-bg);border-radius:16px;padding:24px 18px;text-align:center;margin-top:14px}
+.failcard h2{font-size:20px;color:var(--danger);margin-bottom:8px}
+.failcard p{font-size:14px;color:var(--ink2);margin-bottom:16px}
+</style>
+</head>
+<body>
+<div class="pv"><b>DESIGN PREVIEW</b><a href="index.html">Hub</a>·<a href="watcher-signup.html">Signup</a>·<a href="watcher-queue.html">Queue</a>·<a href="watcher-player.html" class="on">Player</a>·<a href="watcher-earnings.html">Earnings</a>·<a href="watcher-payout.html">Payout</a>·<a href="advertiser-dashboard.html">Advertiser</a>·<a href="admin-console.html">Admin</a></div>
+<div class="phone">
+<div class="screen">
+<div class="backrow"><a href="watcher-queue.html" aria-label="Back to videos">← Videos</a></div>
+
+<div class="stage" id="stage">
+<canvas id="vid" width="640" height="360" aria-label="Advertiser video (simulated in this mockup)"></canvas>
+<button class="bigplay" id="bigplay" aria-label="Play video"><span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span></button>
+<div class="overlay hidden" id="hiddenov" role="alert">
+<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+<h2>Paused — this tab is hidden</h2>
+<p>Watching doesn't count while the tab is hidden. Come back to keep earning.</p>
+<button class="btn btn-primary" id="resumetab" style="max-width:240px">Resume watching</button>
+</div>
+</div>
+
+<div class="transport">
+<button class="tbtn" id="pp" aria-label="Play"><svg id="ppic" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+<span class="time"><span id="tcur">0:00</span> / <span id="tdur">1:20</span></span>
+<span class="lockbadge" title="Faster playback doesn't count. Everyone watches at normal speed."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>1× speed locked</span>
+</div>
+<div class="segbar">
+<div class="segtrack" id="segtrack" role="progressbar" aria-label="Verified watched progress" aria-valuemin="0" aria-valuemax="80" aria-valuenow="0"><div id="segs"></div></div>
+<div class="playhead" id="playhead" style="left:0%"></div>
+</div>
+<div class="seglegend"><span><i style="background:var(--primary)"></i>Verified watched</span><span><i style="background:var(--gold)"></i>Unverified</span><span style="margin-left:auto" id="pctlab">0% of 90% needed</span></div>
+
+<div class="vmeta">
+<h1>How M-Pesa keeps your money safe</h1>
+<div class="adv">Paid ad by Safaricom · 1:20</div>
+<div class="earnline"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Earn $0.02 when you finish</div>
+</div>
+
+<ul class="checklist" aria-label="Requirements to earn">
+<li id="ck-watch"><span class="st">✓</span><span>Watch 90% of the video <b id="ck-watch-v"></b></span></li>
+<li id="ck-attn" class="due"><span class="st">✓</span><span>Attention check — coming up</span></li>
+<li id="ck-vis"><span class="st">✓</span><span>Keep this tab visible</span></li>
+</ul>
+
+<div class="actions">
+<button class="btn btn-ghost" id="skipbtn">Skip video</button>
+</div>
+
+<div class="credit hidden" id="credit">
+<div class="amt" id="creditamt" aria-label="2 cents added">+$0.02</div>
+<p><b>Added to your balance.</b><br>Attention score: 100% · Watched: <span id="finalpct">94%</span></p>
+<a class="btn btn-primary" href="watcher-earnings.html" style="margin-bottom:10px">View receipt</a>
+<a class="btn btn-ghost" href="watcher-queue.html" style="width:100%;justify-content:center">Next video →</a>
+</div>
+
+<div class="failcard hidden" id="failcard" role="alert">
+<h2>This watch didn't count.</h2>
+<p id="failreason">The attention check wasn't answered in time. No money was added — that's the rule for everyone.</p>
+<a class="btn btn-primary" href="watcher-queue.html">Back to videos</a>
+</div>
+
+<details class="debug"><summary>Session details (demo)</summary>
+<div>Session <span style="font-family:var(--mono)">ws_9f3a…c21d</span> · heartbeat every 10s · 1× locked</div>
+<div id="hblog" aria-live="polite"></div></details>
+
+<div class="demoshort"><p>DEMO SHORTCUTS — clearly not product UI:</p><div class="row">
+<button class="demobtn" id="d-check">Trigger attention check</button>
+<button class="demobtn" id="d-quiz">Quiz variant: <span id="qmode">off</span></button>
+<button class="demobtn" id="d-hidden">Simulate tab hidden</button>
+<button class="demobtn" id="d-jump">Jump to completion</button>
+</div></div>
+</div>
+</div>
+
+<!-- ATTENTION MODAL -->
+<div class="scrim hidden" id="attnscrim">
+<div class="modal" role="dialog" aria-modal="true" aria-labelledby="attnt">
+<svg class="ring" viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="36" fill="none" stroke="var(--line)" stroke-width="8"/><circle id="ringfg" cx="42" cy="42" r="36" fill="none" stroke="var(--gold)" stroke-width="8" stroke-linecap="round" stroke-dasharray="226" stroke-dashoffset="0" transform="rotate(-90 42 42)"/><text x="42" y="50" text-anchor="middle" font-size="22" font-weight="700" fill="var(--ink)" id="ringnum">15</text></svg>
+<div id="tapbody">
+<h2 id="attnt">Quick check — are you still watching?</h2>
+<p>Tap below within 15 seconds to keep earning.</p>
+<button class="btn btn-primary" id="tapbtn">I'm watching</button>
+</div>
+<div id="quizbody" class="hidden">
+<h2>Quick question about the video</h2>
+<p>What did the video say protects your M-Pesa PIN?</p>
+<div class="qopts" role="radiogroup" aria-label="Quiz options">
+<label><input type="radio" name="q" value="0"> Sharing it with agents</label>
+<label><input type="radio" name="q" value="1"> Never sharing it with anyone</label>
+<label><input type="radio" name="q" value="2"> Writing it on your phone case</label>
+<label><input type="radio" name="q" value="3"> Using your birthday</label>
+</div>
+<button class="btn btn-primary" id="quizbtn">Answer</button>
+</div>
+</div>
+</div>
+
+<!-- SKIP SHEET -->
+<div class="sheetwrap hidden" id="skipsheet">
+<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="skipt">
+<div class="grab"></div>
+<h2 id="skipt">Skip this video?</h2>
+<p>Skipped videos can come back after 24 hours. You won't earn for this one.</p>
+<button class="btn btn-primary" id="keepwatch" style="margin-bottom:10px">Keep watching</button>
+<button class="btn btn-ghost" id="conskip" style="width:100%;color:var(--danger)">Skip video — no earnings</button>
+</div>
+</div>
+
+<script>
+const DUR=80, NEED=0.9;
+let pos=0, playing=false, lastBeat=0, seq=0, attnDone=false, attnPassed=0, attnTotal=0, failed=false, done=false, hidden=false, quizMode=false;
+const $=id=>document.getElementById(id);
+const cvs=$('vid'), ctx=cvs.getContext('2d');
+function fmt(s){s=Math.max(0,Math.floor(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+// --- simulated video frame ---
+function frame(t){const g=ctx.createLinearGradient(0,0,640,360);const h=(t*4)%360;
+g.addColorStop(0,'hsl('+h+',45%,22%)');g.addColorStop(1,'hsl('+((h+70)%360)+',50%,14%)');
+ctx.fillStyle=g;ctx.fillRect(0,0,640,360);
+ctx.fillStyle='rgba(255,255,255,.08)';for(let i=0;i<5;i++){const x=(t*30*(i+1))%700-40;ctx.beginPath();ctx.arc(x,80+i*45,34,0,7);ctx.fill();}
+ctx.fillStyle='rgba(255,255,255,.85)';ctx.font='700 22px sans-serif';ctx.fillText('SIMULATED AD — demo only',24,330);
+ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='16px monospace';ctx.fillText('t='+fmt(t)+'  720p  1x',24,40);}
+function log(m){const el=$('hblog');el.textContent+=m+'\n';el.scrollTop=1e6;}
+function setPP(){$('ppic').innerHTML=playing?'<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>':'<path d="M8 5v14l11-7z"/>';$('pp').setAttribute('aria-label',playing?'Pause':'Play');$('bigplay').classList.toggle('hidden',playing&&!failed&&!done);}
+function play(){if(failed||done||hidden)return;playing=true;setPP();log('▶ play @ '+fmt(pos));}
+function pause(why){playing=false;setPP();if(why)log('⏸ pause ('+why+') @ '+fmt(pos));}
+$('pp').onclick=()=>playing?pause('user'):play();
+$('bigplay').onclick=()=>play();
+// progress rendering: verified segments appear per accepted heartbeat
+const verified=[]; // [start,end]
+function render(){frame(pos);$('tcur').textContent=fmt(pos);
+const pct=pos/DUR*100;$('playhead').style.left=pct+'%';
+const box=$('segs');box.innerHTML='';verified.forEach(v=>{const d=document.createElement('div');d.className='seg';d.style.left=(v[0]/DUR*100)+'%';d.style.width=((v[1]-v[0])/DUR*100)+'%';box.appendChild(d);});
+const w=verified.reduce((a,v)=>a+(v[1]-v[0]),0)/DUR;$('pctlab').textContent=Math.floor(w*100)+'% of 90% needed';
+$('segtrack').setAttribute('aria-valuenow',Math.floor(w*DUR));
+$('ck-watch-v').textContent='('+Math.floor(w*100)+'%)';
+if(w>=NEED&&!done)$('ck-watch').classList.add('ok');
+if(done)return;
+if(w>=NEED&&attnDone)complete();}
+function heartbeat(){seq++;const ok=!hidden;log('♥ hb #'+seq+' · t='+fmt(pos)+' · '+(hidden?'HIDDEN':'visible')+' · 1.0x → '+(ok?'accepted':'rejected (no credit)'));
+if(ok){const s=verified.length?verified[verified.length-1][1]:0;if(pos>s)verified.push([s,pos]);}}
+let lastT=performance.now();
+function loop(t){const dt=(t-lastT)/1000;lastT=t;
+if(playing&&!hidden&&!failed&&!done){pos=Math.min(DUR,pos+dt);
+if(t-lastBeat>=10000){lastBeat=t;heartbeat();}
+if(!attnDone&&pos>=25)attention();
+if(pos>=DUR&&attnDone)complete();else if(pos>=DUR&&!attnDone)attention(true);
+render();}
+requestAnimationFrame(loop);}
+// --- attention check ---
+let attnTimer=null,left=15;
+function attention(force){pause('attention check');attnTotal++;
+$('tapbody').classList.toggle('hidden',quizMode);$('quizbody').classList.toggle('hidden',!quizMode);
+$('attnscrim').classList.remove('hidden');left=15;drawRing();
+($('tapbtn').focus());
+log('⚠ attention check presented ('+(quizMode?'quiz':'tap')+')');
+clearInterval(attnTimer);attnTimer=setInterval(()=>{left--;drawRing();if(left<=0)attnFail('timeout');},1000);}
+function drawRing(){$('ringfg').style.strokeDashoffset=226*(1-left/15);$('ringnum').textContent=left;}
+function attnPass(){clearInterval(attnTimer);$('attnscrim').classList.add('hidden');attnDone=true;attnPassed++;
+$('ck-attn').classList.add('ok');$('ck-attn').querySelector('span:last-child').innerHTML='Attention check passed';
+log('✓ attention passed');const w=verified.reduce((a,v)=>a+(v[1]-v[0]),0)/DUR;if(w>=NEED)complete();else play();}
+function attnFail(why){clearInterval(attnTimer);$('attnscrim').classList.add('hidden');failed=true;playing=false;setPP();
+log('✗ attention FAILED ('+why+') → session invalidated, no credit');
+$('failreason').textContent=why==='wrong'?'The answer was wrong. No money was added — that\'s the rule for everyone.':'The attention check wasn\'t answered in time. No money was added — that\'s the rule for everyone.';
+$('failcard').classList.remove('hidden');$('failcard').scrollIntoView({block:'center'});}
+$('tapbtn').onclick=attnPass;
+$('quizbtn').onclick=()=>{const v=document.querySelector('input[name=q]:checked');if(!v){return;}v.value==='1'?attnPass():attnFail('wrong');};
+function complete(){if(done||failed)return;done=true;pause('completed');
+const w=verified.reduce((a,v)=>a+(v[1]-v[0]),0)/DUR;$('finalpct').textContent=Math.floor(w*100)+'%';
+log('✓ COMPLETE · watched '+Math.floor(w*100)+'% · attention '+attnPassed+'/'+attnTotal+' → +$0.02 credited (idempotent)');
+$('credit').classList.remove('hidden');$('creditamt').classList.add('flash');
+let c=0;const iv=setInterval(()=>{c+=1;$('creditamt').textContent='+$0.'+String(Math.min(c,2)).padStart(2,'0');if(c>=2)clearInterval(iv);},250);
+$('credit').scrollIntoView({block:'center'});}
+// --- tab hidden ---
+function setHidden(h){hidden=h;$('hiddenov').classList.toggle('hidden',!h);
+if(h){pause('tab hidden');log('⚠ visibilitychange: hidden → paused, zero credit while hidden');$('ck-vis').classList.remove('ok');}else{log('visibilitychange: visible');$('ck-vis').classList.add('ok');}}
+$('d-hidden').onclick=()=>setHidden(!hidden);
+$('resumetab').onclick=()=>{setHidden(false);play();};
+document.addEventListener('visibilitychange',()=>{if(document.hidden)setHidden(true);});
+// --- skip sheet ---
+$('skipbtn').onclick=()=>{pause('skip sheet');$('skipsheet').classList.remove('hidden');};
+$('conskip').onclick=()=>{location.href='watcher-queue.html';};
+document.querySelector('#skipsheet .btn-primary').onclick=()=>{$('skipsheet').classList.add('hidden');play();};
+// --- demo shortcuts ---
+$('d-check').onclick=()=>{if(!done&&!failed)attention();};
+$('d-quiz').onclick=()=>{quizMode=!quizMode;$('qmode').textContent=quizMode?'on':'off';};
+$('d-jump').onclick=()=>{if(done||failed)return;pos=DUR*0.93;const s=verified.length?verified[verified.length-1][1]:0;if(pos>s)verified.push([s,pos]);attnDone=true;attnPassed=1;attnTotal=1;$('ck-attn').classList.add('ok');$('ck-attn').querySelector('span:last-child').innerHTML='Attention check passed';log('⏩ demo shortcut: jumped near completion');complete();};
+$('ck-vis').classList.add('ok');
+render();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

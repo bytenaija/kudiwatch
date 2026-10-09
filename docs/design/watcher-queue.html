@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KudiWatch — Videos for you (mockup)</title>
+<style>
+:root{
+--bg:#ffffff;--surface:#f2f6f3;--card:#ffffff;--ink:#101814;--ink2:#33403a;--muted:#57665e;
+--line:#dde6e0;--primary:#0b6e4f;--primary-deep:#095c42;--onp:#ffffff;
+--gold:#8a5a00;--gold-bg:#faf3df;--danger:#b3261e;--danger-bg:#fdecea;
+--warn-bg:#fff4d6;--warn-ink:#6b4a00;--info:#1d5fa8;--info-bg:#e7f0fb;--ok-bg:#e6f4ec;
+--radius:12px;--tap:48px;
+--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+--mono:ui-monospace,SFMono-Regular,"Roboto Mono",Menlo,Consolas,monospace;
+}
+@media(prefers-color-scheme:dark){
+:root{--bg:#0d1310;--surface:#151e19;--card:#182420;--ink:#eaf3ed;--ink2:#c4d4ca;--muted:#9db3a7;
+--line:#27352d;--primary:#43d18f;--primary-deep:#43d18f;--onp:#06251a;
+--gold:#e8b93c;--gold-bg:#2b230d;--danger:#ff8a80;--danger-bg:#3a1714;
+--warn-bg:#33270a;--warn-ink:#f2cd6b;--info:#7fb3ef;--info-bg:#12283f;--ok-bg:#123326;}
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:#0a0f0c;color:var(--ink);font-size:16px;line-height:1.5}
+.pv{background:repeating-linear-gradient(45deg,#1c2420,#1c2420 12px,#242e28 12px,#242e28 24px);color:#fff;font-size:11px;padding:7px 10px;display:flex;gap:6px;align-items:center;overflow-x:auto;white-space:nowrap}
+.pv b{letter-spacing:.08em;color:#ffd97a}.pv a{color:#9fd8bb;text-decoration:none}.pv a.on{color:#fff;font-weight:700;text-decoration:underline}
+.phone{max-width:400px;margin:0 auto;background:var(--bg);min-height:calc(100vh - 31px);display:flex;flex-direction:column}
+@media(min-width:480px){body{padding:24px 0}.phone{border-radius:24px;overflow:hidden;box-shadow:0 12px 48px rgba(0,0,0,.45);min-height:min(860px,calc(100vh - 80px))}.pv{max-width:400px;margin:0 auto;border-radius:12px 12px 0 0}}
+.screen{padding:16px 16px 96px;flex:1}
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.mark{width:34px;height:34px;border-radius:10px;background:var(--primary);display:grid;place-items:center;color:var(--onp);font-weight:800;font-size:18px}
+.brandname{font-weight:800;font-size:18px}
+.balance{margin-left:auto;display:flex;align-items:center;gap:6px;background:var(--ok-bg);color:var(--primary-deep);font-weight:800;font-variant-numeric:tabular-nums;padding:8px 12px;border-radius:999px;font-size:15px;text-decoration:none}
+h1{font-size:22px;margin:4px 0 8px}
+.honest{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;font-size:13px;color:var(--ink2);margin-bottom:14px;display:flex;gap:8px}
+svg.ic{width:18px;height:18px;flex:none}
+.capmeter{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;margin-bottom:14px;font-size:13px;color:var(--ink2)}
+.capmeter .bar{height:6px;background:var(--surface);border-radius:3px;margin-top:8px;overflow:hidden}
+.capmeter .bar i{display:block;height:100%;width:12%;background:var(--primary);border-radius:3px}
+.vcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:14px}
+.thumb{position:relative;aspect-ratio:16/9;display:block}
+.thumb svg{width:100%;height:100%;display:block}
+.durbadge{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.75);color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:6px;font-variant-numeric:tabular-nums}
+.vbody{padding:12px 14px}
+.vtitle{font-size:17px;font-weight:700;line-height:1.3}
+.vadv{font-size:13px;color:var(--muted);margin-top:2px}
+.vrow{display:flex;align-items:center;gap:8px;margin-top:10px}
+.pay{background:var(--gold-bg);color:var(--gold);font-weight:800;font-size:15px;padding:6px 10px;border-radius:999px;font-variant-numeric:tabular-nums}
+.vstate{font-size:13px;color:var(--ink2)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;width:100%;border:0;border-radius:var(--radius);font-size:17px;font-weight:700;font-family:var(--font);cursor:pointer;text-decoration:none;padding:0 16px}
+.btn-primary{background:var(--primary);color:var(--onp)}
+.btn-ghost{background:transparent;color:var(--primary-deep);min-height:var(--tap);font-size:15px;width:auto;padding:0 8px}
+.prog{height:8px;background:var(--surface);border-radius:4px;overflow:hidden;margin-top:10px}
+.prog i{display:block;height:100%;background:var(--primary);border-radius:4px}
+.done-row{display:flex;align-items:center;gap:8px;margin-top:10px;background:var(--ok-bg);border-radius:8px;padding:8px 10px;font-size:14px;font-weight:600;color:var(--primary-deep)}
+.skipnote{font-size:12px;color:var(--muted);margin-top:8px}
+.tabbar{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;z-index:5}
+.tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 0 12px;text-decoration:none;color:var(--muted);font-size:11px;font-weight:600;position:relative}
+.tabbar a.on{color:var(--primary-deep)}
+.tabbar a.on::before{content:"";position:absolute;top:0;left:25%;right:25%;height:3px;border-radius:0 0 3px 3px;background:var(--primary)}
+.tabbar svg{width:24px;height:24px}
+.dot{position:absolute;top:8px;right:calc(50% - 18px);width:9px;height:9px;border-radius:50%;background:var(--gold)}
+.empty{text-align:center;padding:48px 24px}
+.empty h2{font-size:20px;margin:16px 0 8px}
+.empty p{color:var(--muted);font-size:15px;margin-bottom:20px}
+.hidden{display:none!important}
+button:focus-visible,a:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.demofoot{margin-top:24px;text-align:center}
+</style>
+</head>
+<body>
+<div class="pv"><b>DESIGN PREVIEW</b><a href="index.html">Hub</a>·<a href="watcher-signup.html">Signup</a>·<a href="watcher-queue.html" class="on">Queue</a>·<a href="watcher-player.html">Player</a>·<a href="watcher-earnings.html">Earnings</a>·<a href="watcher-payout.html">Payout</a>·<a href="advertiser-dashboard.html">Advertiser</a>·<a href="admin-console.html">Admin</a></div>
+<div class="phone">
+<div class="screen" id="feed">
+
+<div class="topbar"><div class="mark">K</div><div class="brandname">KudiWatch</div><a class="balance" href="watcher-earnings.html" aria-label="Balance 4 dollars 86 cents. View earnings.">$4.86</a></div>
+
+<h1>Videos for you</h1>
+<div class="honest"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>Watch a video <b>fully</b> to earn. Skipped or half-watched videos pay nothing.</span></div>
+<div class="capmeter"><b>6 of 50</b> videos today <span style="float:right">resets midnight</span><div class="bar" role="progressbar" aria-valuenow="6" aria-valuemin="0" aria-valuemax="50" aria-label="Daily video limit"><i></i></div></div>
+
+<!-- Card 1: ready -->
+<article class="vcard">
+<a class="thumb" href="watcher-player.html" aria-label="Watch: How M-Pesa keeps your money safe, 1 minute 20 seconds, pays 2 cents">
+<svg viewBox="0 0 320 180" aria-hidden="true"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b6e4f"/><stop offset="1" stop-color="#083f2e"/></linearGradient></defs><rect width="320" height="180" fill="url(#g1)"/><circle cx="70" cy="50" r="46" fill="#ffffff" opacity=".12"/><rect x="210" y="100" width="140" height="90" rx="12" fill="#ffffff" opacity=".1"/><circle cx="160" cy="90" r="30" fill="#000" opacity=".45"/><path d="M152 74l24 16-24 16z" fill="#fff"/></svg>
+<span class="durbadge">1:20</span></a>
+<div class="vbody">
+<div class="vtitle">How M-Pesa keeps your money safe</div>
+<div class="vadv">Paid ad by Safaricom</div>
+<div class="vrow"><span class="pay">+$0.02</span><span class="vstate">per completed watch</span></div>
+<div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+<a class="btn btn-primary" href="watcher-player.html" style="flex:1">Watch</a>
+<button class="btn btn-ghost" onclick="this.closest('.vcard').querySelector('.skipnote').classList.toggle('hidden')">Skip</button>
+</div>
+<p class="skipnote hidden">Skipped videos can return after 24 hours.</p>
+</div></article>
+
+<!-- Card 2: in progress -->
+<article class="vcard">
+<div class="thumb" aria-hidden="true">
+<svg viewBox="0 0 320 180"><defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1d5fa8"/><stop offset="1" stop-color="#0e2f57"/></linearGradient></defs><rect width="320" height="180" fill="url(#g2)"/><circle cx="250" cy="45" r="52" fill="#ffffff" opacity=".12"/><rect x="30" y="110" width="120" height="80" rx="12" fill="#ffffff" opacity=".1"/><circle cx="160" cy="90" r="30" fill="#000" opacity=".45"/><path d="M152 74l24 16-24 16z" fill="#fff"/></svg>
+<span class="durbadge">2:05</span></div>
+<div class="vbody">
+<div class="vtitle">Solar for your shop: a 3-minute guide</div>
+<div class="vadv">Paid ad by SunKing</div>
+<div class="vrow"><span class="pay">+$0.03</span><span class="vstate">per completed watch</span></div>
+<div class="prog" role="progressbar" aria-valuenow="41" aria-valuemin="0" aria-valuemax="100" aria-label="Verified watched progress, 41 percent"><i style="width:41%"></i></div>
+<p class="vstate" style="margin-top:6px">Paused at 41% — keep watching to reach 90%.</p>
+<div style="margin-top:10px"><a class="btn btn-primary" href="watcher-player.html">Resume</a></div>
+</div></article>
+
+<!-- Card 3: done -->
+<article class="vcard">
+<div class="thumb" aria-hidden="true">
+<svg viewBox="0 0 320 180"><defs><linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a5a00"/><stop offset="1" stop-color="#4a3200"/></linearGradient></defs><rect width="320" height="180" fill="url(#g3)"/><circle cx="90" cy="130" r="48" fill="#ffffff" opacity=".12"/><rect x="200" y="30" width="130" height="70" rx="12" fill="#ffffff" opacity=".1"/><circle cx="160" cy="90" r="30" fill="#000" opacity=".45"/><path d="M150 78l4 24 8-14 8 14z" fill="#fff"/></svg>
+<span class="durbadge">0:45</span></div>
+<div class="vbody">
+<div class="vtitle">New Infinix Note — see it first</div>
+<div class="vadv">Paid ad by Infinix Nigeria</div>
+<div class="done-row"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> $0.02 earned · Watched 96% · Attention 100%</div>
+</div></article>
+
+<div class="demofoot"><button class="btn btn-ghost" id="toggleempty" style="margin:0 auto">Preview: empty state ↓</button></div>
+</div>
+
+<!-- EMPTY STATE -->
+<div class="screen hidden" id="empty">
+<div class="topbar"><div class="mark">K</div><div class="brandname">KudiWatch</div><a class="balance" href="watcher-earnings.html">$4.86</a></div>
+<div class="empty">
+<svg width="96" height="96" viewBox="0 0 96 96" fill="none" aria-hidden="true"><rect x="14" y="22" width="68" height="44" rx="10" stroke="#57665e" stroke-width="3"/><path d="M40 36l14 9-14 9z" fill="#0b6e4f"/><path d="M30 76h36" stroke="#57665e" stroke-width="3" stroke-linecap="round"/><circle cx="76" cy="30" r="9" fill="#faf3df" stroke="#8a5a00" stroke-width="2.5"/><path d="M72 30h8M76 26v8" stroke="#8a5a00" stroke-width="2.5" stroke-linecap="round"/></svg>
+<h2>No videos right now.</h2>
+<p>New videos appear when advertisers launch campaigns in Nigeria.<br>Check back soon — your balance isn't going anywhere.</p>
+<button class="btn btn-primary" onclick="location.reload()">Check again</button>
+<div class="demofoot"><button class="btn btn-ghost" onclick="location.reload()" style="margin:0 auto">← Back to videos</button></div>
+</div></div>
+
+<nav class="tabbar" aria-label="Main">
+<a href="watcher-queue.html" class="on" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>Videos</a>
+<a href="watcher-earnings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 010-4h14v4"/><path d="M3 5v14a2 2 0 002 2h16v-5"/><path d="M18 12a2 2 0 000 4h4v-4z"/></svg>Earnings</a>
+<a href="watcher-payout.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Payout<span class="dot" aria-label="Payout status update"></span></a>
+</nav>
+</div>
+<script>
+document.getElementById('toggleempty').onclick=()=>{document.getElementById('feed').classList.add('hidden');document.getElementById('empty').classList.remove('hidden');window.scrollTo(0,0);};
+</script>
+</body>
+</html>

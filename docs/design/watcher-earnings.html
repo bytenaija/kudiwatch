@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KudiWatch — Earnings (mockup)</title>
+<style>
+:root{
+--bg:#ffffff;--surface:#f2f6f3;--card:#ffffff;--ink:#101814;--ink2:#33403a;--muted:#57665e;
+--line:#dde6e0;--primary:#0b6e4f;--primary-deep:#095c42;--onp:#ffffff;
+--gold:#8a5a00;--gold-bg:#faf3df;--danger:#b3261e;--danger-bg:#fdecea;
+--warn-bg:#fff4d6;--warn-ink:#6b4a00;--info:#1d5fa8;--ok-bg:#e6f4ec;
+--radius:12px;--tap:48px;
+--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+--mono:ui-monospace,SFMono-Regular,"Roboto Mono",Menlo,Consolas,monospace;
+}
+@media(prefers-color-scheme:dark){
+:root{--bg:#0d1310;--surface:#151e19;--card:#182420;--ink:#eaf3ed;--ink2:#c4d4ca;--muted:#9db3a7;
+--line:#27352d;--primary:#43d18f;--primary-deep:#43d18f;--onp:#06251a;
+--gold:#e8b93c;--gold-bg:#2b230d;--danger:#ff8a80;--danger-bg:#3a1714;
+--warn-bg:#33270a;--warn-ink:#f2cd6b;--info:#7fb3ef;--ok-bg:#123326;}
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:#0a0f0c;color:var(--ink);font-size:16px;line-height:1.5}
+.pv{background:repeating-linear-gradient(45deg,#1c2420,#1c2420 12px,#242e28 12px,#242e28 24px);color:#fff;font-size:11px;padding:7px 10px;display:flex;gap:6px;align-items:center;overflow-x:auto;white-space:nowrap}
+.pv b{letter-spacing:.08em;color:#ffd97a}.pv a{color:#9fd8bb;text-decoration:none}.pv a.on{color:#fff;font-weight:700;text-decoration:underline}
+.phone{max-width:400px;margin:0 auto;background:var(--bg);min-height:calc(100vh - 31px);display:flex;flex-direction:column}
+@media(min-width:480px){body{padding:24px 0}.phone{border-radius:24px;overflow:hidden;box-shadow:0 12px 48px rgba(0,0,0,.45);min-height:min(860px,calc(100vh - 80px))}.pv{max-width:400px;margin:0 auto;border-radius:12px 12px 0 0}}
+.screen{padding:16px 16px 96px;flex:1}
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.mark{width:34px;height:34px;border-radius:10px;background:var(--primary);display:grid;place-items:center;color:var(--onp);font-weight:800;font-size:18px}
+.brandname{font-weight:800;font-size:18px}
+h1{font-size:22px;margin:4px 0 12px}
+.hero{background:var(--primary);color:var(--onp);border-radius:16px;padding:20px 18px}
+.hero .lab{font-size:13px;opacity:.85}
+.hero .amt{font-size:40px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.2}
+.hero .sub{font-size:13px;opacity:.85;margin-top:4px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;width:100%;border:0;border-radius:var(--radius);font-size:17px;font-weight:700;font-family:var(--font);cursor:pointer;text-decoration:none;padding:0 16px;margin-top:14px}
+.btn-light{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.35)}
+.min-note{text-align:center;font-size:13px;color:var(--muted);margin-top:8px}
+.stats{display:flex;gap:10px;margin:16px 0}
+.stat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:10px;text-align:center}
+.stat b{display:block;font-size:19px;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+h2{font-size:18px;margin:18px 0 10px}
+details.rcpt{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:10px;overflow:hidden}
+details.rcpt summary{list-style:none;display:flex;gap:10px;align-items:center;padding:10px 12px;cursor:pointer;min-height:64px}
+details.rcpt summary::-webkit-details-marker{display:none}
+.rthumb{width:56px;height:32px;border-radius:6px;flex:none}
+.rtitle{flex:1;min-width:0}
+.rtitle b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rtitle span{font-size:12px;color:var(--muted)}
+.ramt{font-weight:800;color:var(--primary-deep);font-variant-numeric:tabular-nums}
+.rchips{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 4px}
+.chip{font-size:11px;font-weight:700;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px 8px;color:var(--ink2)}
+.rdetail{border-top:1px dashed var(--line);margin:8px 12px 0;padding:10px 0 12px;font-size:13px}
+.rdetail dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px}
+.rdetail dt{color:var(--muted)}.rdetail dd{font-weight:600;text-align:right}
+.rdetail .mono{font-family:var(--mono);font-size:12px}
+.tabbar{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex}
+.tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 0 12px;text-decoration:none;color:var(--muted);font-size:11px;font-weight:600;position:relative}
+.tabbar a.on{color:var(--primary-deep)}
+.tabbar a.on::before{content:"";position:absolute;top:0;left:25%;right:25%;height:3px;border-radius:0 0 3px 3px;background:var(--primary)}
+.tabbar svg{width:24px;height:24px}
+.dot{position:absolute;top:8px;right:calc(50% - 18px);width:9px;height:9px;border-radius:50%;background:var(--gold)}
+button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="pv"><b>DESIGN PREVIEW</b><a href="index.html">Hub</a>·<a href="watcher-signup.html">Signup</a>·<a href="watcher-queue.html">Queue</a>·<a href="watcher-player.html">Player</a>·<a href="watcher-earnings.html" class="on">Earnings</a>·<a href="watcher-payout.html">Payout</a>·<a href="advertiser-dashboard.html">Advertiser</a>·<a href="admin-console.html">Admin</a></div>
+<div class="phone">
+<div class="screen">
+<div class="topbar"><div class="mark">K</div><div class="brandname">KudiWatch</div></div>
+<h1>Earnings</h1>
+
+<div class="hero">
+<div class="lab">Available balance</div>
+<div class="amt" aria-label="4 dollars 86 cents">$4.86</div>
+<div class="sub">$0.50 waiting in payout review</div>
+<a class="btn btn-light" href="watcher-payout.html">Request payout</a>
+</div>
+<p class="min-note">Minimum payout is $1.00 · No fees to request</p>
+
+<div class="stats">
+<div class="stat"><b>142</b><span>videos watched</span></div>
+<div class="stat"><b>$7.36</b><span>earned all time</span></div>
+<div class="stat"><b>98%</b><span>attention</span></div>
+</div>
+
+<h2>Earnings history</h2>
+
+<details class="rcpt" open>
+<summary>
+<svg class="rthumb" viewBox="0 0 56 32" aria-hidden="true"><rect width="56" height="32" fill="#0b6e4f"/><circle cx="40" cy="10" r="10" fill="#fff" opacity=".15"/></svg>
+<span class="rtitle"><b>How M-Pesa keeps your money safe</b><span>Today · 2:14 PM</span></span>
+<span class="ramt">+$0.02</span>
+</summary>
+<div class="rchips"><span class="chip">Watched 94%</span><span class="chip">Attention 100%</span><span class="chip">2/2 checks</span></div>
+<div class="rdetail"><dl>
+<dt>Session</dt><dd class="mono">ws_9f3a…c21d</dd>
+<dt>Campaign</dt><dd>Safaricom · Mobile money safety</dd>
+<dt>Finished</dt><dd>Today, 2:14 PM</dd>
+<dt>Device</dt><dd>Android</dd>
+<dt>Country</dt><dd>Nigeria</dd>
+<dt>Checks</dt><dd>tap ✓ · quiz ✓</dd>
+</dl></div>
+</details>
+
+<details class="rcpt">
+<summary>
+<svg class="rthumb" viewBox="0 0 56 32" aria-hidden="true"><rect width="56" height="32" fill="#1d5fa8"/><circle cx="14" cy="22" r="10" fill="#fff" opacity=".15"/></svg>
+<span class="rtitle"><b>Solar for your shop: a 3-minute guide</b><span>Today · 11:02 AM</span></span>
+<span class="ramt">+$0.03</span>
+</summary>
+<div class="rchips"><span class="chip">Watched 91%</span><span class="chip">Attention 100%</span><span class="chip">1/1 checks</span></div>
+<div class="rdetail"><dl>
+<dt>Session</dt><dd class="mono">ws_77be…04aa</dd>
+<dt>Campaign</dt><dd>SunKing · Solar guide</dd>
+<dt>Finished</dt><dd>Today, 11:02 AM</dd>
+<dt>Device</dt><dd>Android</dd>
+<dt>Country</dt><dd>Nigeria</dd>
+<dt>Checks</dt><dd>tap ✓</dd>
+</dl></div>
+</details>
+
+<details class="rcpt">
+<summary>
+<svg class="rthumb" viewBox="0 0 56 32" aria-hidden="true"><rect width="56" height="32" fill="#8a5a00"/><circle cx="44" cy="20" r="9" fill="#fff" opacity=".15"/></svg>
+<span class="rtitle"><b>New Infinix Note — see it first</b><span>Yesterday · 6:48 PM</span></span>
+<span class="ramt">+$0.02</span>
+</summary>
+<div class="rchips"><span class="chip">Watched 96%</span><span class="chip">Attention 100%</span><span class="chip">1/1 checks</span></div>
+<div class="rdetail"><dl>
+<dt>Session</dt><dd class="mono">ws_51cd…9e02</dd>
+<dt>Campaign</dt><dd>Infinix Nigeria · Launch</dd>
+<dt>Finished</dt><dd>Yesterday, 6:48 PM</dd>
+<dt>Device</dt><dd>Android</dd>
+<dt>Country</dt><dd>Nigeria</dd>
+<dt>Checks</dt><dd>tap ✓</dd>
+</dl></div>
+</details>
+
+</div>
+<nav class="tabbar" aria-label="Main">
+<a href="watcher-queue.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>Videos</a>
+<a href="watcher-earnings.html" class="on" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 010-4h14v4"/><path d="M3 5v14a2 2 0 002 2h16v-5"/><path d="M18 12a2 2 0 000 4h4v-4z"/></svg>Earnings</a>
+<a href="watcher-payout.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Payout<span class="dot" aria-label="Payout status update"></span></a>
+</nav>
+</div>
+</body>
+</html>

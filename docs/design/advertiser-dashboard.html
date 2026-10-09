@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KudiWatch — Advertiser dashboard (mockup)</title>
+<style>
+:root{
+--bg:#ffffff;--surface:#f2f6f3;--card:#ffffff;--ink:#101814;--ink2:#33403a;--muted:#57665e;
+--line:#dde6e0;--primary:#0b6e4f;--primary-deep:#095c42;--onp:#ffffff;
+--gold:#8a5a00;--gold-bg:#faf3df;--danger:#b3261e;--danger-bg:#fdecea;
+--warn-bg:#fff4d6;--warn-ink:#6b4a00;--info:#1d5fa8;--info-bg:#e7f0fb;--ok-bg:#e6f4ec;
+--radius:12px;--tap:48px;
+--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+--mono:ui-monospace,SFMono-Regular,"Roboto Mono",Menlo,Consolas,monospace;
+}
+@media(prefers-color-scheme:dark){
+:root{--bg:#0d1310;--surface:#151e19;--card:#182420;--ink:#eaf3ed;--ink2:#c4d4ca;--muted:#9db3a7;
+--line:#27352d;--primary:#43d18f;--primary-deep:#43d18f;--onp:#06251a;
+--gold:#e8b93c;--gold-bg:#2b230d;--danger:#ff8a80;--danger-bg:#3a1714;
+--warn-bg:#33270a;--warn-ink:#f2cd6b;--info:#7fb3ef;--info-bg:#12283f;--ok-bg:#123326;}
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:#0a0f0c;color:var(--ink);font-size:16px;line-height:1.5}
+.pv{background:repeating-linear-gradient(45deg,#1c2420,#1c2420 12px,#242e28 12px,#242e28 24px);color:#fff;font-size:11px;padding:7px 10px;display:flex;gap:6px;align-items:center;overflow-x:auto;white-space:nowrap}
+.pv b{letter-spacing:.08em;color:#ffd97a}.pv a{color:#9fd8bb;text-decoration:none}.pv a.on{color:#fff;font-weight:700;text-decoration:underline}
+.shell{max-width:960px;margin:0 auto;background:var(--bg);min-height:calc(100vh - 31px)}
+@media(min-width:520px){body{padding:24px 12px}.shell{border-radius:20px;overflow:hidden}.pv{max-width:960px;margin:0 auto;border-radius:12px 12px 0 0}}
+.wrap{padding:20px 20px 48px}
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.mark{width:34px;height:34px;border-radius:10px;background:var(--primary);display:grid;place-items:center;color:var(--onp);font-weight:800;font-size:18px}
+.brandname{font-weight:800;font-size:18px}
+.brandname small{font-weight:400;color:var(--muted);font-size:13px}
+.wallet{margin-left:auto;display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);padding:8px 8px 8px 14px;border-radius:999px;font-variant-numeric:tabular-nums;font-weight:700}
+h1{font-size:26px;margin:14px 0 4px}
+p.lead{color:var(--ink2);margin-bottom:16px;max-width:640px}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:18px;overflow-x:auto}
+.tabs button{border:0;background:none;font-family:var(--font);font-size:15px;font-weight:600;color:var(--muted);padding:12px 14px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;min-height:48px}
+.tabs button.on{color:var(--primary-deep);border-bottom-color:var(--primary)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border:0;border-radius:var(--radius);font-size:16px;font-weight:700;font-family:var(--font);cursor:pointer;text-decoration:none;padding:0 18px}
+.btn-primary{background:var(--primary);color:var(--onp)}
+.btn-secondary{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.btn-ghost{background:transparent;color:var(--primary-deep);min-height:44px;font-size:15px}
+.btn-danger{background:var(--danger-bg);color:var(--danger)}
+.grid{display:grid;gap:14px}
+@media(min-width:720px){.grid.c2{grid-template-columns:1fr 1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.card h3{font-size:17px;margin-bottom:4px}
+.card .meta{font-size:13px;color:var(--muted);margin-bottom:10px}
+.chip{font-size:11px;font-weight:700;border-radius:999px;padding:4px 10px;letter-spacing:.02em;display:inline-flex;align-items:center;gap:4px}
+.chip.ok{background:var(--ok-bg);color:var(--primary-deep)}.chip.info{background:var(--info-bg);color:var(--info)}
+.chip.warn{background:var(--warn-bg);color:var(--warn-ink)}.chip.bad{background:var(--danger-bg);color:var(--danger)}
+.chip.neu{background:var(--surface);color:var(--muted)}
+.budgetbar{height:8px;background:var(--surface);border-radius:4px;overflow:hidden;margin:10px 0 4px}
+.budgetbar i{display:block;height:100%;background:var(--primary)}
+.statrow{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin-top:8px}
+.statrow b{font-variant-numeric:tabular-nums;color:var(--ink)}
+.card .actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:10px 8px;border-bottom:2px solid var(--line);white-space:nowrap}
+td{padding:10px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;vertical-align:top}
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--card)}
+label.fl{display:block;font-size:14px;font-weight:600;margin:16px 0 6px}
+input[type=text],input[type=number],select,textarea{width:100%;min-height:52px;border:1.5px solid var(--line);border-radius:var(--radius);background:var(--card);color:var(--ink);font-size:16px;font-family:var(--font);padding:10px 14px}
+input[type=range]{width:100%;height:48px;accent-color:var(--primary)}
+.checks{display:flex;gap:8px;flex-wrap:wrap}
+.checks label{display:flex;gap:8px;align-items:center;border:1.5px solid var(--line);border-radius:10px;padding:10px 14px;min-height:48px;cursor:pointer;font-size:15px}
+.checks input{width:20px;height:20px;accent-color:var(--primary)}
+.checks label:has(input:checked){border-color:var(--primary);background:var(--ok-bg)}
+.vidpick{display:flex;gap:10px;align-items:center;border:2px solid var(--line);border-radius:var(--radius);padding:10px;margin:8px 0;cursor:pointer;background:var(--card)}
+.vidpick.sel{border-color:var(--primary)}
+.vidpick svg{width:84px;height:48px;border-radius:6px;flex:none}
+.spread{background:var(--gold-bg);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--ink2);margin-top:12px}
+.spread b{color:var(--gold)}
+.wizsteps{display:flex;gap:6px;margin:0 0 18px}
+.wizsteps span{flex:1;font-size:12px;font-weight:700;color:var(--muted);border-top:4px solid var(--line);padding-top:6px}
+.wizsteps span.on{color:var(--primary-deep);border-color:var(--primary)}
+.hidden{display:none!important}
+.drop{border:2px dashed var(--line);border-radius:var(--radius);padding:32px 16px;text-align:center;color:var(--muted);margin:8px 0}
+.drop b{color:var(--ink2)}
+.mock{background:var(--warn-bg);color:var(--warn-ink);border-radius:var(--radius);padding:10px 12px;font-size:13px;font-weight:600;margin-bottom:14px}
+.note{font-size:13px;color:var(--muted);margin-top:8px}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="pv"><b>DESIGN PREVIEW</b><a href="index.html">Hub</a>·<a href="watcher-signup.html">Signup</a>·<a href="watcher-queue.html">Queue</a>·<a href="watcher-player.html">Player</a>·<a href="watcher-earnings.html">Earnings</a>·<a href="watcher-payout.html">Payout</a>·<a href="advertiser-dashboard.html" class="on">Advertiser</a>·<a href="admin-console.html">Admin</a></div>
+<div class="shell"><div class="wrap">
+<div class="topbar"><div class="mark">K</div><div class="brandname">KudiWatch <small>for advertisers</small></div>
+<div class="wallet"><span>Balance <b>$250.00</b></span><button class="btn btn-primary" style="min-height:40px;font-size:14px" onclick="showTab('funding')">Add funds</button></div></div>
+
+<h1>Pay for real human attention.</h1>
+<p class="lead">Upload your video. Watchers watch it fully — verified second by second — and you get proof of every view.</p>
+
+<div class="tabs" role="tablist">
+<button class="on" data-t="campaigns" role="tab">Campaigns</button>
+<button data-t="videos" role="tab">Videos</button>
+<button data-t="receipts" role="tab">Receipts</button>
+<button data-t="funding" role="tab">Funding</button>
+<button data-t="create" role="tab" style="color:var(--primary-deep)">+ New campaign</button>
+</div>
+
+<!-- CAMPAIGNS -->
+<section id="tab-campaigns">
+<div class="grid c2">
+<div class="card"><h3>Mobile money safety</h3><div class="meta">Safaricom · started Oct 1</div>
+<span class="chip ok">● LIVE</span>
+<div class="budgetbar" role="progressbar" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100" aria-label="Budget spent, 25 percent"><i style="width:25%"></i></div>
+<div class="meta">$12.40 spent of $50.00 budget</div>
+<div class="statrow"><span><b>620</b> views</span><span><b>91%</b> completion</span><span><b>97%</b> avg attention</span></div>
+<div class="actions"><button class="btn btn-secondary">Pause</button><button class="btn btn-ghost" onclick="showTab('receipts')">View receipts →</button></div></div>
+<div class="card"><h3>Solar guide — harvest season</h3><div class="meta">SunKing · started Oct 6</div>
+<span class="chip info">● PAUSED</span>
+<div class="budgetbar"><i style="width:6%"></i></div>
+<div class="meta">$1.80 spent of $30.00 budget</div>
+<div class="statrow"><span><b>60</b> views</span><span><b>88%</b> completion</span><span><b>94%</b> avg attention</span></div>
+<div class="actions"><button class="btn btn-secondary">Resume</button><button class="btn btn-ghost" onclick="showTab('receipts')">View receipts →</button></div></div>
+<div class="card"><h3>Infinix Note launch</h3><div class="meta">Infinix Nigeria · ended Oct 7</div>
+<span class="chip neu">■ EXHAUSTED</span>
+<div class="budgetbar"><i style="width:100%"></i></div>
+<div class="meta">$20.00 spent of $20.00 budget</div>
+<div class="statrow"><span><b>1,000</b> views</span><span><b>93%</b> completion</span><span><b>98%</b> avg attention</span></div>
+<div class="actions"><button class="btn btn-ghost" onclick="showTab('receipts')">View receipts →</button></div></div>
+</div>
+</section>
+
+<!-- VIDEOS -->
+<section id="tab-videos" class="hidden">
+<div class="drop"><b>Drop your video here</b> or <button class="btn btn-ghost" style="display:inline">browse files</button><div class="note">MP4 or WebM · 15–180 seconds · up to 200 MB</div></div>
+<div class="grid c2">
+<div class="card"><h3>mpesa-safety-v3.mp4</h3><div class="meta">1:20 · 18.4 MB · uploaded Oct 1</div><span class="chip ok">✓ APPROVED</span><div class="actions"><button class="btn btn-ghost" onclick="showTab('create')">Use in campaign →</button></div></div>
+<div class="card"><h3>solar-harvest-cut.mp4</h3><div class="meta">2:05 · 31.2 MB · uploaded Oct 6</div><span class="chip ok">✓ APPROVED</span></div>
+<div class="card"><h3>infinix-teaser-final.mp4</h3><div class="meta">0:45 · 9.1 MB · uploaded Sep 29</div><span class="chip warn">◷ IN REVIEW</span><div class="note">A person checks every video before it goes live.</div></div>
+<div class="card"><h3>crypto-doubler-ad.mp4</h3><div class="meta">0:30 · 6.0 MB · uploaded Oct 7</div><span class="chip bad">✕ REJECTED</span><div class="note">Reason: "Get-rich promises are not allowed."</div></div>
+</div></section>
+
+<!-- RECEIPTS -->
+<section id="tab-receipts" class="hidden">
+<h2 style="font-size:19px;margin-bottom:6px">Proof of attention</h2>
+<p class="lead">Every completed view, receipted. This is what your budget bought.</p>
+<div class="statrow" style="margin-bottom:12px"><span><b>1,680</b> views</span><span><b>91%</b> completion rate</span><span><b>97%</b> avg attention</span><span><b>$34.20</b> spent</span></div>
+<div class="tblwrap"><table>
+<thead><tr><th>Session</th><th>Watched</th><th>Attention</th><th>Checks</th><th>Country</th><th>Device</th><th>Finished</th></tr></thead>
+<tbody>
+<tr><td style="font-family:var(--mono);font-size:12px">ws_9f3a…c21d</td><td>94%</td><td>100%</td><td>2/2</td><td>NG</td><td>Android</td><td>Oct 8, 2:14 PM</td></tr>
+<tr><td style="font-family:var(--mono);font-size:12px">ws_77be…04aa</td><td>91%</td><td>100%</td><td>1/1</td><td>NG</td><td>Android</td><td>Oct 8, 11:02 AM</td></tr>
+<tr><td style="font-family:var(--mono);font-size:12px">ws_51cd…9e02</td><td>96%</td><td>100%</td><td>1/1</td><td>KE</td><td>Android</td><td>Oct 7, 6:48 PM</td></tr>
+<tr><td style="font-family:var(--mono);font-size:12px">ws_3d20…77b1</td><td>90%</td><td>50%</td><td>1/2</td><td>NG</td><td>Android</td><td>Oct 7, 5:31 PM</td></tr>
+</tbody></table></div>
+<div style="margin-top:12px"><button class="btn btn-secondary" onclick="alert('Demo: CSV of receipts would download here.')">Export CSV</button></div>
+</section>
+
+<!-- FUNDING -->
+<section id="tab-funding" class="hidden">
+<div class="mock">Mock mode — top-ups are demo money. No real charge, ever, in this build.</div>
+<div class="card" style="max-width:480px"><h3>Add funds</h3><div class="meta">Demo card · 4242 ···· ···· 4242 · instant, fake settlement</div>
+<div class="checks" role="radiogroup" aria-label="Top-up amount">
+<label><input type="radio" name="top" checked> $50</label><label><input type="radio" name="top"> $100</label><label><input type="radio" name="top"> $500</label></div>
+<div style="margin-top:14px"><button class="btn btn-primary" onclick="alert('Demo: $50 mock credit added to advertiser wallet.')">Add $50 (demo money)</button></div>
+<p class="note">At launch this becomes a real card/transfer rail behind the same screen. The ledger underneath doesn't change.</p></div>
+</section>
+
+<!-- CREATE WIZARD -->
+<section id="tab-create" class="hidden">
+<div class="wizsteps" aria-hidden="true"><span class="on" id="w1">1 · Video</span><span id="w2">2 · Budget &amp; pay</span><span id="w3">3 · Who sees it</span><span id="w4">4 · Review</span></div>
+
+<div id="wz1">
+<h2 style="font-size:19px">Choose your video</h2><p class="lead">Only approved videos can run.</p>
+<label class="vidpick sel"><input type="radio" name="v" checked style="width:22px;height:22px;accent-color:var(--primary)"><svg viewBox="0 0 84 48"><rect width="84" height="48" fill="#0b6e4f"/><circle cx="42" cy="24" r="12" fill="#000" opacity=".4"/><path d="M38 17l10 7-10 7z" fill="#fff"/></svg><span><b>mpesa-safety-v3.mp4</b><br><small style="color:var(--muted)">1:20 · approved</small></span></label>
+<label class="vidpick"><input type="radio" name="v" style="width:22px;height:22px;accent-color:var(--primary)"><svg viewBox="0 0 84 48"><rect width="84" height="48" fill="#1d5fa8"/><circle cx="42" cy="24" r="12" fill="#000" opacity=".4"/><path d="M38 17l10 7-10 7z" fill="#fff"/></svg><span><b>solar-harvest-cut.mp4</b><br><small style="color:var(--muted)">2:05 · approved</small></span></label>
+<div style="margin-top:16px;display:flex;gap:8px"><button class="btn btn-primary" onclick="wiz(2)">Continue</button></div>
+</div>
+
+<div id="wz2" class="hidden">
+<h2 style="font-size:19px">Budget &amp; pay</h2>
+<label class="fl" for="cname">Campaign name</label><input type="text" id="cname" value="Mobile money safety">
+<label class="fl" for="ppv">Watcher earns per completed view: <b id="ppvlab" style="color:var(--primary-deep)">$0.02</b></label>
+<input type="range" id="ppv" min="1" max="3" step="1" value="2" aria-label="Cents per view, 1 to 3">
+<div class="spread" id="spreadline">You pay <b>$0.04</b> per completed view. The watcher gets <b>$0.02</b>. KudiWatch keeps <b>$0.02</b>.</div>
+<label class="fl" for="budg">Campaign budget (USD)</label><input type="number" id="budg" value="50" min="5">
+<p class="note">Only completed, verified views spend your budget. Unspent budget returns to your wallet if you end the campaign.</p>
+<div style="margin-top:16px;display:flex;gap:8px"><button class="btn btn-secondary" onclick="wiz(1)">Back</button><button class="btn btn-primary" onclick="wiz(3)">Continue</button></div>
+</div>
+
+<div id="wz3" class="hidden">
+<h2 style="font-size:19px">Who sees it</h2>
+<label class="fl">Countries</label>
+<div class="checks"><label><input type="checkbox" checked> Nigeria</label><label><input type="checkbox" checked> Kenya</label><label><input type="checkbox"> India</label><label><input type="checkbox"> Philippines</label><label><input type="checkbox"> Indonesia</label></div>
+<label class="fl" for="dev">Devices</label><select id="dev"><option>Any</option><option>Android only</option><option>iOS only</option></select>
+<label class="fl" for="dcap">Daily limit <span style="font-weight:400;color:var(--muted)">(spreads your budget through the day)</span></label><input type="number" id="dcap" value="1000">
+<label class="fl" for="ucap">Views per person <span style="font-weight:400;color:var(--muted)">(1 = every view is a new person)</span></label><input type="number" id="ucap" value="1" min="1">
+<div style="margin-top:16px;display:flex;gap:8px"><button class="btn btn-secondary" onclick="wiz(2)">Back</button><button class="btn btn-primary" onclick="wiz(4)">Review</button></div>
+</div>
+
+<div id="wz4" class="hidden">
+<h2 style="font-size:19px">Review &amp; launch</h2>
+<div class="card"><div class="srow" style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)"><span>Video</span><b>mpesa-safety-v3.mp4</b></div>
+<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)"><span>Watcher pay / view</span><b id="r-ppv">$0.02</b></div>
+<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)"><span>Your cost / view</span><b id="r-cpc">$0.04</b></div>
+<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)"><span>Budget (escrowed now)</span><b id="r-bud">$50.00</b></div>
+<div style="display:flex;justify-content:space-between;padding:8px 0"><span>Targeting</span><b>NG, KE · any device</b></div></div>
+<p class="note">$50.00 moves from your wallet into campaign escrow when you launch. It only pays out on verified, completed views.</p>
+<div style="margin-top:16px;display:flex;gap:8px"><button class="btn btn-secondary" onclick="wiz(3)">Back</button><button class="btn btn-primary" onclick="alert('Demo: campaign created → live, $50 escrowed.')">Launch campaign</button></div>
+</div>
+</section>
+
+</div></div>
+<script>
+const tabs=[...document.querySelectorAll('.tabs button')];
+function showTab(t){tabs.forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+['campaigns','videos','receipts','funding','create'].forEach(k=>document.getElementById('tab-'+k).classList.toggle('hidden',k!==t));window.scrollTo(0,0);}
+tabs.forEach(b=>b.onclick=()=>showTab(b.dataset.t));
+function wiz(n){[1,2,3,4].forEach(i=>{document.getElementById('wz'+i).classList.toggle('hidden',i!==n);document.getElementById('w'+i).classList.toggle('on',i<=n);});window.scrollTo(0,0);}
+const ppv=document.getElementById('ppv');
+ppv.oninput=()=>{const c=ppv.value;document.getElementById('ppvlab').textContent='$0.0'+c;
+const cpc=(c*2/100).toFixed(2);document.getElementById('spreadline').innerHTML='You pay <b>$'+cpc+'</b> per completed view. The watcher gets <b>$0.0'+c+'</b>. KudiWatch keeps <b>$'+(cpc-c/100).toFixed(2)+'</b>.';
+document.getElementById('r-ppv').textContent='$0.0'+c;document.getElementById('r-cpc').textContent='$'+cpc;};
+document.getElementById('budg').oninput=e=>document.getElementById('r-bud').textContent='$'+(parseFloat(e.target.value)||0).toFixed(2);
+</script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KudiWatch — Payout (mockup)</title>
+<style>
+:root{
+--bg:#ffffff;--surface:#f2f6f3;--card:#ffffff;--ink:#101814;--ink2:#33403a;--muted:#57665e;
+--line:#dde6e0;--primary:#0b6e4f;--primary-deep:#095c42;--onp:#ffffff;
+--gold:#8a5a00;--gold-bg:#faf3df;--danger:#b3261e;--danger-bg:#fdecea;
+--warn-bg:#fff4d6;--warn-ink:#6b4a00;--info:#1d5fa8;--info-bg:#e7f0fb;--ok-bg:#e6f4ec;
+--radius:12px;--tap:48px;
+--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+--mono:ui-monospace,SFMono-Regular,"Roboto Mono",Menlo,Consolas,monospace;
+}
+@media(prefers-color-scheme:dark){
+:root{--bg:#0d1310;--surface:#151e19;--card:#182420;--ink:#eaf3ed;--ink2:#c4d4ca;--muted:#9db3a7;
+--line:#27352d;--primary:#43d18f;--primary-deep:#43d18f;--onp:#06251a;
+--gold:#e8b93c;--gold-bg:#2b230d;--danger:#ff8a80;--danger-bg:#3a1714;
+--warn-bg:#33270a;--warn-ink:#f2cd6b;--info:#7fb3ef;--info-bg:#12283f;--ok-bg:#123326;}
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:#0a0f0c;color:var(--ink);font-size:16px;line-height:1.5}
+.pv{background:repeating-linear-gradient(45deg,#1c2420,#1c2420 12px,#242e28 12px,#242e28 24px);color:#fff;font-size:11px;padding:7px 10px;display:flex;gap:6px;align-items:center;overflow-x:auto;white-space:nowrap}
+.pv b{letter-spacing:.08em;color:#ffd97a}.pv a{color:#9fd8bb;text-decoration:none}.pv a.on{color:#fff;font-weight:700;text-decoration:underline}
+.phone{max-width:400px;margin:0 auto;background:var(--bg);min-height:calc(100vh - 31px);display:flex;flex-direction:column}
+@media(min-width:480px){body{padding:24px 0}.phone{border-radius:24px;overflow:hidden;box-shadow:0 12px 48px rgba(0,0,0,.45);min-height:min(900px,calc(100vh - 80px))}.pv{max-width:400px;margin:0 auto;border-radius:12px 12px 0 0}}
+.screen{padding:16px 16px 96px;flex:1}
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.mark{width:34px;height:34px;border-radius:10px;background:var(--primary);display:grid;place-items:center;color:var(--onp);font-weight:800;font-size:18px}
+.brandname{font-weight:800;font-size:18px}
+.mock{background:var(--warn-bg);color:var(--warn-ink);border-radius:var(--radius);padding:10px 12px;font-size:13px;font-weight:600;display:flex;gap:8px;margin-bottom:14px}
+h1{font-size:22px;margin:4px 0 4px}
+.bal{font-size:15px;color:var(--ink2);margin-bottom:16px}
+.bal b{color:var(--primary-deep);font-variant-numeric:tabular-nums}
+label.fl{display:block;font-size:14px;font-weight:600;margin:18px 0 6px}
+.amtrow{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:var(--radius);background:var(--card);overflow:hidden}
+.amtrow span.cur{padding:0 4px 0 14px;font-size:22px;font-weight:700;color:var(--muted)}
+.amtrow input{flex:1;height:56px;border:0;font-size:24px;font-weight:700;font-family:var(--font);color:var(--ink);background:transparent;font-variant-numeric:tabular-nums;min-width:0}
+.amtrow input:focus{outline:none}
+.amtrow:focus-within{outline:3px solid var(--primary);outline-offset:2px;border-color:var(--primary)}
+input[type=text],input[type=tel],select{width:100%;height:52px;border:1.5px solid var(--line);border-radius:var(--radius);background:var(--card);color:var(--ink);font-size:16px;font-family:var(--font);padding:0 14px}
+.quick{display:flex;gap:8px;margin-top:8px}
+.quick button{flex:1;min-height:44px;border:1px solid var(--line);background:var(--surface);border-radius:10px;font-weight:700;font-family:var(--font);color:var(--ink2);cursor:pointer;font-size:15px}
+.err{font-size:14px;color:var(--danger);margin-top:8px;font-weight:600}
+.method{display:flex;gap:12px;align-items:center;border:2px solid var(--line);border-radius:var(--radius);padding:12px;margin:8px 0;cursor:pointer;background:var(--card);min-height:72px}
+.method input{width:24px;height:24px;accent-color:var(--primary);flex:none}
+.method .mi{width:40px;height:40px;border-radius:10px;background:var(--gold-bg);display:grid;place-items:center;flex:none;color:var(--gold)}
+.method .mi svg{width:22px;height:22px}
+.method b{display:block;font-size:16px}
+.method small{color:var(--muted);font-size:13px}
+.method.sel{border-color:var(--primary);background:var(--ok-bg)}
+.receive{display:flex;justify-content:space-between;align-items:center;background:var(--surface);border-radius:var(--radius);padding:12px 14px;margin-top:12px;font-size:15px}
+.receive b{font-size:22px;color:var(--primary-deep);font-variant-numeric:tabular-nums}
+.feennote{font-size:12px;color:var(--muted);margin-top:6px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;width:100%;border:0;border-radius:var(--radius);font-size:17px;font-weight:700;font-family:var(--font);cursor:pointer;text-decoration:none;padding:0 16px;margin-top:16px}
+.btn-primary{background:var(--primary);color:var(--onp)}
+.btn-primary:disabled{opacity:.5;cursor:default}
+.btn-ghost{background:transparent;color:var(--primary-deep);min-height:var(--tap);font-size:15px;width:100%}
+h2{font-size:18px;margin:24px 0 10px}
+.stepper{list-style:none;margin:0}
+.stepper li{display:flex;gap:12px;position:relative;padding-bottom:18px}
+.stepper li::before{content:"";position:absolute;left:11px;top:26px;bottom:0;width:2px;background:var(--line)}
+.stepper li:last-child::before{display:none}
+.stepper .n{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;flex:none;font-size:13px;font-weight:700;color:var(--muted);background:var(--card);z-index:1}
+.stepper li.done .n{background:var(--primary);border-color:var(--primary);color:#fff}
+.stepper li.now .n{border-color:var(--gold);color:var(--gold)}
+.stepper b{display:block;font-size:15px}
+.stepper li.now b{color:var(--gold)}
+.stepper small{font-size:12px;color:var(--muted);font-family:var(--mono)}
+.tcard{border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:14px;background:var(--card)}
+.tcard .topline{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.tcard .amt{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+.chip{font-size:11px;font-weight:700;border-radius:999px;padding:4px 10px;letter-spacing:.02em}
+.chip.warn{background:var(--warn-bg);color:var(--warn-ink)}
+.chip.ok{background:var(--ok-bg);color:var(--primary-deep)}
+.chip.info{background:var(--info-bg);color:var(--info)}
+.chip.bad{background:var(--danger-bg);color:var(--danger)}
+.hist{border:1px solid var(--line);border-radius:var(--radius);margin-bottom:10px;padding:12px 14px;display:flex;gap:10px;align-items:center}
+.hist .ha{flex:1}.hist .ha b{display:block;font-variant-numeric:tabular-nums}.hist .ha span{font-size:12px;color:var(--muted)}
+.hist .ramt{font-weight:800;font-variant-numeric:tabular-nums;color:var(--primary-deep)}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+.sheet{background:var(--card);border-radius:16px 16px 0 0;padding:14px 18px 28px;max-width:400px;width:100%}
+.sheet .grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 14px}
+.sheet h2{margin:0 0 10px}
+.srow{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}
+.srow b{font-variant-numeric:tabular-nums}
+.reviewnote{background:var(--info-bg);color:var(--ink2);border-radius:10px;padding:10px 12px;font-size:13px;margin:12px 0}
+.hidden{display:none!important}
+.tabbar{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex}
+.tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 0 12px;text-decoration:none;color:var(--muted);font-size:11px;font-weight:600;position:relative}
+.tabbar a.on{color:var(--primary-deep)}
+.tabbar a.on::before{content:"";position:absolute;top:0;left:25%;right:25%;height:3px;border-radius:0 0 3px 3px;background:var(--primary)}
+.tabbar svg{width:24px;height:24px}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="pv"><b>DESIGN PREVIEW</b><a href="index.html">Hub</a>·<a href="watcher-signup.html">Signup</a>·<a href="watcher-queue.html">Queue</a>·<a href="watcher-player.html">Player</a>·<a href="watcher-earnings.html">Earnings</a>·<a href="watcher-payout.html" class="on">Payout</a>·<a href="advertiser-dashboard.html">Advertiser</a>·<a href="admin-console.html">Admin</a></div>
+<div class="phone">
+<div class="screen">
+<div class="topbar"><div class="mark">K</div><div class="brandname">KudiWatch</div></div>
+<div class="mock" role="note"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex:none"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg><span>Mock mode — no real money moves in this build. Payouts are simulated end-to-end.</span></div>
+
+<h1>Get your money</h1>
+<p class="bal">Available balance: <b>$4.86</b></p>
+
+<label class="fl" for="amount">How much? <span style="font-weight:400;color:var(--muted)">(minimum $1.00)</span></label>
+<div class="amtrow"><span class="cur">$</span><input id="amount" type="text" inputmode="decimal" value="2.50" aria-describedby="amterr"></div>
+<div class="quick"><button data-a="1.00">$1</button><button data-a="2.00">$2</button><button data-a="4.86">All</button></div>
+<p class="err hidden" id="amterr" role="alert"></p>
+
+<label class="fl">How should we send it?</label>
+<div role="radiogroup" aria-label="Payout method">
+<label class="method sel"><input type="radio" name="m" value="mpesa" checked><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></span><span><b>M-Pesa</b><small id="f-mpesa">Fee 1.5% · Arrives in ~5 minutes</small></span></label>
+<label class="method"><input type="radio" name="m" value="bank"><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-6 9 6M4 9v10M20 9v10M8 12v5M12 12v5M16 12v5M2 21h20"/></svg></span><span><b>Bank transfer</b><small id="f-bank">Fee $0.30 · Arrives in ~1 day</small></span></label>
+<label class="method"><input type="radio" name="m" value="airtime"><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg></span><span><b>Airtime</b><small id="f-airtime">No fee · Arrives in ~5 minutes</small></span></label>
+<label class="method"><input type="radio" name="m" value="usdt"><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2h4M12 2v6M5 8h14l-2 7H7zM7 15l-2 5M17 15l2 5M9 20h6"/></svg></span><span><b>USDT</b><small id="f-usdt">Network fee $1.00 · Arrives in ~10 minutes</small></span></label>
+</div>
+
+<div id="dest-mpesa"><label class="fl" for="d1">M-Pesa phone number</label><input type="tel" id="d1" value="+234 801 234 5678"></div>
+<div id="dest-bank" class="hidden"><label class="fl" for="d2a">Account number</label><input type="text" id="d2a" inputmode="numeric" placeholder="0123456789"><label class="fl" for="d2b">Bank</label><select id="d2b"><option>GTBank</option><option>Access Bank</option><option>First Bank</option><option>UBA</option></select></div>
+<div id="dest-airtime" class="hidden"><label class="fl" for="d3">Phone number for airtime</label><input type="tel" id="d3" value="+234 801 234 5678"></div>
+<div id="dest-usdt" class="hidden"><label class="fl" for="d4a">USDT wallet address</label><input type="text" id="d4a" placeholder="T…" style="font-family:var(--mono);font-size:14px"><label class="fl" for="d4b">Network</label><select id="d4b"><option>TRC20 (Tron)</option><option>ERC20 (Ethereum)</option></select></div>
+
+<div class="receive"><span>You'll receive</span><b id="recv">$2.46</b></div>
+<p class="feennote">Fees are estimates for this demo. Real fees will be shown before you confirm.</p>
+
+<button class="btn btn-primary" id="req">Request payout</button>
+
+<h2>Track payout</h2>
+<div class="tcard">
+<div class="topline"><span class="amt">$2.50</span><span class="chip warn">UNDER REVIEW</span></div>
+<ol class="stepper">
+<li class="done"><span class="n">✓</span><div><b>Under review</b><small>pending_review · today 3:02 PM</small><div style="font-size:13px;color:var(--ink2)">A reviewer checks every payout. This usually takes under 24 hours.</div></div></li>
+<li class="now"><span class="n">2</span><div><b>Approved</b><small>approved · waiting</small></div></li>
+<li><span class="n">3</span><div><b>Sending</b><small>processing · waiting</small></div></li>
+<li><span class="n">4</span><div><b>Paid</b><small>completed · waiting</small></div></li>
+</ol>
+</div>
+
+<h2>Past payouts</h2>
+<div class="hist"><span class="ha"><b>$3.00</b><span>M-Pesa · Oct 5</span></span><span class="chip ok">PAID</span></div>
+<div class="hist"><span class="ha"><b>$1.50</b><span>Airtime · Oct 2</span></span><span class="chip ok">PAID</span></div>
+<div class="hist"><span class="ha"><b>$2.50</b><span>Bank · Sep 28</span><span style="display:block">Failed: bank rejected the account number. Money returned to balance.</span></span><span class="chip bad">FAILED</span></div>
+
+</div>
+<nav class="tabbar" aria-label="Main">
+<a href="watcher-queue.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>Videos</a>
+<a href="watcher-earnings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 010-4h14v4"/><path d="M3 5v14a2 2 0 002 2h16v-5"/><path d="M18 12a2 2 0 000 4h4v-4z"/></svg>Earnings</a>
+<a href="watcher-payout.html" class="on" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Payout</a>
+</nav>
+</div>
+
+<!-- CONFIRM SHEET -->
+<div class="scrim hidden" id="confirm">
+<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="cft">
+<div class="grab"></div>
+<h2 id="cft">Confirm payout</h2>
+<div class="srow"><span>Amount</span><b id="c-amt">$2.50</b></div>
+<div class="srow"><span>Fee (<span id="c-mn">M-Pesa</span>)</span><b id="c-fee">$0.04</b></div>
+<div class="srow"><span>You'll receive</span><b id="c-recv">$2.46</b></div>
+<div class="srow" style="border:0"><span>To</span><b id="c-to" style="font-size:14px">+234 801 234 5678</b></div>
+<div class="reviewnote">A person reviews every payout before money moves. This usually takes under 24 hours.</div>
+<button class="btn btn-primary" id="cfgo" style="margin-top:0">Confirm payout</button>
+<button class="btn btn-ghost" id="cfback">Back</button>
+</div>
+</div>
+
+<script>
+const BAL=4.86, MIN=1.00;
+const FEES={mpesa:{t:'M-Pesa',f:a=>a*0.015,fmt:v=>'$'+v.toFixed(2)},bank:{t:'Bank transfer',f:()=>0.30,fmt:v=>'$'+v.toFixed(2)},airtime:{t:'Airtime',f:()=>0,fmt:()=>'No fee'},usdt:{t:'USDT',f:()=>1.00,fmt:v=>'$'+v.toFixed(2)}};
+const $=id=>document.getElementById(id);
+let method='mpesa';
+function amt(){return parseFloat(($('amount').value||'0').replace(/[^0-9.]/g,''))||0;}
+function validate(){const a=amt(),e=$('amterr'),b=$('req');e.classList.add('hidden');
+if(a<MIN){e.textContent='Minimum payout is $1.00. You\'re at $'+a.toFixed(2)+' — $'+(MIN-a).toFixed(2)+' to go.';e.classList.remove('hidden');b.disabled=true;return false;}
+if(a>BAL){e.textContent='That\'s more than your $'+BAL.toFixed(2)+' balance.';e.classList.remove('hidden');b.disabled=true;return false;}
+b.disabled=false;return true;}
+function fee(){return FEES[method].f(amt());}
+function refresh(){const a=amt(),f=fee();$('recv').textContent='$'+Math.max(0,a-f).toFixed(2);validate();}
+$('amount').addEventListener('input',refresh);
+document.querySelectorAll('.quick button').forEach(q=>q.onclick=()=>{$('amount').value=q.dataset.a;refresh();});
+document.querySelectorAll('input[name=m]').forEach(r=>r.addEventListener('change',()=>{method=r.value;
+document.querySelectorAll('.method').forEach(m=>m.classList.remove('sel'));r.closest('.method').classList.add('sel');
+['mpesa','bank','airtime','usdt'].forEach(k=>$('dest-'+k).classList.toggle('hidden',k!==method));refresh();}));
+$('req').onclick=()=>{if(!validate())return;const a=amt(),f=fee();
+$('c-amt').textContent='$'+a.toFixed(2);$('c-mn').textContent=FEES[method].t;
+$('c-fee').textContent=FEES[method].fmt(f);$('c-recv').textContent='$'+Math.max(0,a-f).toFixed(2);
+const dest={mpesa:$('d1').value,bank:$('d2a').value+' · '+$('d2b').value,airtime:$('d3').value,usdt:$('d4a').value.slice(0,10)+'… · '+$('d4b').value}[method];
+$('c-to').textContent=dest||'—';$('confirm').classList.remove('hidden');};
+$('cfback').onclick=()=>$('confirm').classList.add('hidden');
+$('cfgo').onclick=()=>{$('confirm').classList.add('hidden');alert('Demo: payout requested → pending_review. In the product this enters the admin approval queue.');};
+refresh();
+</script>
+</body>
+</html>

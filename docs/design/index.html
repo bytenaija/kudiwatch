@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KudiWatch — Design Mockups Hub</title>
+<style>
+:root{--bg:#fff;--surface:#f2f6f3;--ink:#101814;--ink2:#33403a;--muted:#57665e;--line:#dde6e0;--primary:#0b6e4f;--onp:#fff;--gold:#8a5a00;--radius:12px;--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+@media(prefers-color-scheme:dark){:root{--bg:#0d1310;--surface:#151e19;--ink:#eaf3ed;--ink2:#c4d4ca;--muted:#9db3a7;--line:#27352d;--primary:#43d18f;--onp:#06251a;--gold:#e8b93c}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);font-size:16px;line-height:1.5}
+.pv{background:repeating-linear-gradient(45deg,#1c2420,#1c2420 12px,#242e28 12px,#242e28 24px);color:#fff;font-size:12px;padding:8px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pv b{letter-spacing:.08em}
+.pv a{color:#9fd8bb}
+.wrap{max-width:640px;margin:0 auto;padding:24px 16px 64px}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.mark{width:36px;height:36px;border-radius:10px;background:var(--primary);display:grid;place-items:center;color:var(--onp);font-weight:800}
+h1{font-size:24px}h2{font-size:18px;margin:28px 0 4px}
+p.sub{color:var(--muted);margin-bottom:8px}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;font-size:14px;color:var(--ink2);margin:12px 0}
+.card{display:block;border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin:10px 0;text-decoration:none;color:var(--ink);background:var(--bg)}
+.card:hover{border-color:var(--primary)}
+.card h3{font-size:17px;display:flex;justify-content:space-between;align-items:center}
+.card h3 .go{color:var(--primary);font-weight:700}
+.card p{font-size:14px;color:var(--muted);margin-top:4px}
+.card .try{font-size:13px;color:var(--ink2);margin-top:8px;border-top:1px dashed var(--line);padding-top:8px}
+.card .try b{color:var(--gold)}
+.role{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin:28px 0 2px}
+a{color:var(--primary)}
+.docs{font-size:14px;color:var(--muted)}
+.docs code{background:var(--surface);padding:1px 6px;border-radius:6px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="pv"><b>DESIGN PREVIEW</b><span>Static mockups — no network, no backend. Open any file directly.</span></div>
+<div class="wrap">
+  <div class="brand"><div class="mark">K</div><h1>KudiWatch — clickable mockups</h1></div>
+  <p class="sub">Mobile-first PWA screens, designed at 360&nbsp;px. Every screen links to the next step of its flow; the striped preview bar on each page jumps anywhere.</p>
+  <div class="note">These mockups simulate product behavior with inline JS only (fake playback, fake OTP <b>482916</b>). Money screens carry the <b>mock-mode banner</b>. See <span class="docs"><code>DESIGN.md</code> · <code>COPY.md</code> · <code>DECISIONS-DESIGN.md</code></span> for the system, copy, and deltas vs the engineering deepdive.</div>
+
+  <div class="role">Watcher PWA</div>
+  <a class="card" href="watcher-signup.html"><h3>1 · Signup <span class="go">→</span></h3><p>Phone number → 6-digit OTP → profile basics. Error, resend-cooldown, and demo-code states.</p><p class="try"><b>Try:</b> enter any number, use code <b>482916</b>, try a wrong code to see the attempts counter.</p></a>
+  <a class="card" href="watcher-queue.html"><h3>2 · Video queue <span class="go">→</span></h3><p>Available videos: thumbnail, duration, pay per view, advertiser, ready / in-progress / done states. Daily cap meter. Empty state.</p><p class="try"><b>Try:</b> the “Preview empty state” toggle at the bottom.</p></a>
+  <a class="card" href="watcher-player.html"><h3>3 · Player <span class="go">→</span></h3><p><b>The critical screen.</b> Simulated 1×-locked playback, verified-segments progress bar, requirement checklist, tab-hidden overlay, attention-check modal (tap + quiz), skip sheet, completion credit.</p><p class="try"><b>Try:</b> “Trigger attention check”, “Simulate tab hidden”, “Jump to completion” shortcuts — all clearly labeled demo shortcuts.</p></a>
+  <a class="card" href="watcher-earnings.html"><h3>4 · Earnings <span class="go">→</span></h3><p>Balance hero, lifetime stats, per-view receipt rows (expandable: watch %, attention score, checks, session ID).</p></a>
+  <a class="card" href="watcher-payout.html"><h3>5 · Payout <span class="go">→</span></h3><p>Mock banner, $1.00 minimum enforced, method picker (M-Pesa / bank / airtime / USDT) with live fee math, confirm sheet, status tracker (pending_review → approved → processing → completed), history.</p><p class="try"><b>Try:</b> type 0.50 (blocked), pick each method to see fee/ETA change.</p></a>
+
+  <div class="role">Advertiser</div>
+  <a class="card" href="advertiser-dashboard.html"><h3>6 · Advertiser dashboard <span class="go">→</span></h3><p>Campaign list, 4-step create-campaign wizard (video → budget & pay → targeting → review), mock top-up, live stats, per-view receipts table with export.</p></a>
+
+  <div class="role">Admin</div>
+  <a class="card" href="admin-console.html"><h3>7 · Admin console <span class="go">→</span></h3><p>Tabbed: payout approval queue (approve/reject + note, re-auth notice), video moderation, flagged accounts (warn/suspend/ban), config, audit log.</p></a>
+
+  <h2>Review checklist</h2>
+  <div class="note">1. Does every money screen radiate legitimacy? 2. Is any copy promising what the product can't guarantee? 3. Do state names match <code>DEEPDIVE.md</code> exactly ($1.00 min, 90% completion, payout states)? 4. Is everything tappable at 360 px with one thumb?</div>
+</div>
+</body>
+</html>

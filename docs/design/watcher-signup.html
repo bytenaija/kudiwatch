@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KudiWatch — Signup (mockup)</title>
+<style>
+/* ===== KudiWatch design tokens (shared) ===== */
+:root{
+--bg:#ffffff;--surface:#f2f6f3;--card:#ffffff;--ink:#101814;--ink2:#33403a;--muted:#57665e;
+--line:#dde6e0;--primary:#0b6e4f;--primary-deep:#095c42;--onp:#ffffff;
+--gold:#8a5a00;--gold-bg:#faf3df;--danger:#b3261e;--danger-bg:#fdecea;
+--warn-bg:#fff4d6;--warn-ink:#6b4a00;--info:#1d5fa8;--ok-bg:#e6f4ec;
+--radius:12px;--tap:48px;
+--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+--mono:ui-monospace,SFMono-Regular,"Roboto Mono",Menlo,Consolas,monospace;
+}
+@media(prefers-color-scheme:dark){
+:root{--bg:#0d1310;--surface:#151e19;--card:#182420;--ink:#eaf3ed;--ink2:#c4d4ca;--muted:#9db3a7;
+--line:#27352d;--primary:#43d18f;--primary-deep:#43d18f;--onp:#06251a;
+--gold:#e8b93c;--gold-bg:#2b230d;--danger:#ff8a80;--danger-bg:#3a1714;
+--warn-bg:#33270a;--warn-ink:#f2cd6b;--info:#7fb3ef;--ok-bg:#123326;}
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--font);background:#0a0f0c;color:var(--ink);font-size:16px;line-height:1.5;min-height:100vh}
+.pv{background:repeating-linear-gradient(45deg,#1c2420,#1c2420 12px,#242e28 12px,#242e28 24px);color:#fff;font-size:11px;padding:7px 10px;display:flex;gap:6px;align-items:center;overflow-x:auto;white-space:nowrap}
+.pv b{letter-spacing:.08em;color:#ffd97a}
+.pv a{color:#9fd8bb;text-decoration:none}
+.pv a.on{color:#fff;font-weight:700;text-decoration:underline}
+.phone{max-width:400px;margin:0 auto;background:var(--bg);min-height:calc(100vh - 31px);display:flex;flex-direction:column}
+@media(min-width:480px){body{padding:24px 0}.phone{border-radius:24px;overflow:hidden;box-shadow:0 12px 48px rgba(0,0,0,.45);min-height:min(860px,calc(100vh - 80px))}.pv{max-width:400px;margin:0 auto;border-radius:12px 12px 0 0}}
+.screen{padding:20px 16px 32px;flex:1}
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.mark{width:34px;height:34px;border-radius:10px;background:var(--primary);display:grid;place-items:center;color:var(--onp);font-weight:800;font-size:18px}
+.brandname{font-weight:800;font-size:18px;letter-spacing:-.01em}
+.steps{display:flex;gap:6px;margin:4px 0 20px}
+.steps i{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.steps i.done{background:var(--primary)}
+h1{font-size:24px;line-height:1.25;letter-spacing:-.01em;margin-bottom:8px}
+p.lead{color:var(--ink2);margin-bottom:20px}
+p.small{font-size:14px;color:var(--muted)}
+label.fl{display:block;font-size:14px;font-weight:600;margin:16px 0 6px}
+input[type=text],input[type=tel],input[type=number],select{width:100%;height:52px;border:1.5px solid var(--line);border-radius:var(--radius);background:var(--card);color:var(--ink);font-size:16px;font-family:var(--font);padding:0 14px}
+input:focus,select:focus,button:focus-visible{outline:3px solid var(--primary);outline-offset:2px;border-color:var(--primary)}
+.hint{font-size:13px;color:var(--muted);margin-top:6px}
+.err{font-size:14px;color:var(--danger);margin-top:8px;font-weight:600}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;width:100%;border:0;border-radius:var(--radius);font-size:17px;font-weight:700;font-family:var(--font);cursor:pointer;text-decoration:none;padding:0 16px}
+.btn-primary{background:var(--primary);color:var(--onp)}
+.btn-primary:disabled{opacity:.55;cursor:default}
+.btn-secondary{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.btn-ghost{background:transparent;color:var(--primary-deep);min-height:var(--tap);font-size:16px}
+.btn + .btn{margin-top:10px}
+.stack>*+*{margin-top:12px}
+.otp{display:flex;gap:8px;margin:8px 0}
+.otp input{width:52px;height:56px;text-align:center;font-size:24px;font-weight:700;padding:0}
+.otp input.err-b{border-color:var(--danger);animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.demobanner{background:var(--warn-bg);color:var(--warn-ink);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;font-size:13px;margin-bottom:16px}
+.demobanner b{font-family:var(--mono)}
+.consent{font-size:13px;color:var(--muted);background:var(--surface);border-radius:var(--radius);padding:12px;margin:16px 0}
+.howto{background:var(--surface);border-radius:var(--radius);padding:14px;margin:16px 0}
+.howto li{margin:8px 0 8px 20px;font-size:15px}
+.trustline{display:flex;gap:10px;align-items:flex-start;background:var(--ok-bg);border-radius:var(--radius);padding:12px;font-size:14px;margin-top:16px}
+svg.ic{width:20px;height:20px;flex:none}
+.hidden{display:none!important}
+.foot{margin-top:auto;padding:16px;text-align:center;font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="pv"><b>DESIGN PREVIEW</b><a href="index.html">Hub</a>·<a href="watcher-signup.html" class="on">Signup</a>·<a href="watcher-queue.html">Queue</a>·<a href="watcher-player.html">Player</a>·<a href="watcher-earnings.html">Earnings</a>·<a href="watcher-payout.html">Payout</a>·<a href="advertiser-dashboard.html">Advertiser</a>·<a href="admin-console.html">Admin</a></div>
+<div class="phone">
+<div class="screen">
+
+<div class="topbar"><div class="mark">K</div><div class="brandname">KudiWatch</div></div>
+<div class="steps" aria-hidden="true"><i id="s1" class="done"></i><i id="s2"></i><i id="s3"></i></div>
+
+<!-- STEP 1 -->
+<section id="step1">
+<h1>Enter your phone number</h1>
+<p class="lead">We use your phone number to keep things fair — one person, one account. We never sell your number, and we never share it with advertisers.</p>
+<label class="fl" for="cc">Country</label>
+<select id="cc">
+<option value="+234" selected>Nigeria (+234)</option><option value="+254">Kenya (+254)</option>
+<option value="+91">India (+91)</option><option value="+63">Philippines (+63)</option><option value="+62">Indonesia (+62)</option>
+</select>
+<label class="fl" for="phone">Phone number</label>
+<input type="tel" id="phone" inputmode="tel" placeholder="801 234 5678" autocomplete="tel">
+<p class="hint">We'll send a 6-digit code by SMS. Standard rates may apply.</p>
+<div style="margin-top:20px"><button class="btn btn-primary" id="sendcode">Send code</button></div>
+</section>
+
+<!-- STEP 2 -->
+<section id="step2" class="hidden">
+<h1>Enter your code</h1>
+<p class="lead" id="codesent">We sent a 6-digit code to <b>+234 801 234 5678</b>. It expires in 10 minutes.</p>
+<div class="demobanner">Demo build — your code is <b>482916</b>. Real builds send it by SMS.</div>
+<div class="otp" role="group" aria-label="6-digit verification code">
+<input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 1"><input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 2"><input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 3"><input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 4"><input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 5"><input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 6">
+</div>
+<p class="err hidden" id="otperr">That code didn't match. <span id="tries">4</span> tries left.</p>
+<div style="margin-top:16px"><button class="btn btn-primary" id="verify">Verify</button></div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+<button class="btn btn-ghost" id="back1" style="width:auto">← Wrong number?</button>
+<button class="btn btn-ghost" id="resend" style="width:auto" disabled>Resend code in 0:42</button>
+</div>
+</section>
+
+<!-- STEP 3 -->
+<section id="step3" class="hidden">
+<h1>Tell us about you</h1>
+<p class="lead">Just the basics. You can change your display name later.</p>
+<label class="fl" for="dname">What should we call you?</label>
+<input type="text" id="dname" placeholder="e.g. Adaeze" autocomplete="name">
+<label class="fl" for="country">Country</label>
+<select id="country"><option selected>Nigeria</option><option>Kenya</option><option>India</option><option>Philippines</option><option>Indonesia</option></select>
+<label class="fl" for="lang">Language</label>
+<select id="lang" disabled><option>English (more languages coming)</option></select>
+<div class="consent">By creating an account you agree to watch videos honestly — one account per person, no tricks. Accounts that cheat are removed.</div>
+<button class="btn btn-primary" id="create">Create account</button>
+</section>
+
+<!-- DONE -->
+<section id="step4" class="hidden">
+<h1>Welcome, <span id="wname">Adaeze</span>.</h1>
+<p class="lead">Here's how earning works:</p>
+<div class="howto"><ol>
+<li><b>Pick a video</b> and watch it all the way through.</li>
+<li><b>Answer a quick check</b> to prove you watched.</li>
+<li><b>Get paid</b> — $0.01 to $0.03 per video, straight to your balance.</li>
+</ol></div>
+<div class="trustline"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span><b>No fees to join. Watching is always free.</b><br>We will never ask for your bank password.</span></div>
+<div style="margin-top:20px"><a class="btn btn-primary" href="watcher-queue.html">Find videos to watch</a></div>
+</section>
+
+</div>
+<div class="foot">KudiWatch · Earn for your attention · Mockup — no real accounts are created</div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+function go(n){[1,2,3,4].forEach(i=>$('step'+i).classList.toggle('hidden',i!==n));[1,2,3].forEach(i=>$('s'+i).classList.toggle('done',i<=n));window.scrollTo(0,0);}
+$('sendcode').onclick=()=>{const p=$('phone').value.replace(/\D/g,'');if(p.length<7){$('phone').focus();$('phone').style.borderColor='var(--danger)';return;}$('codesent').innerHTML='We sent a 6-digit code to <b>'+$('cc').value+' '+$('phone').value+'</b>. It expires in 10 minutes.';go(2);otp[0].focus();tick();};
+$('back1').onclick=()=>go(1);
+const otp=[...document.querySelectorAll('.otp input')];
+otp.forEach((b,i)=>{b.addEventListener('input',()=>{b.value=b.value.replace(/\D/g,'').slice(-1);if(b.value&&i<5)otp[i+1].focus();});
+b.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!b.value&&i>0)otp[i-1].focus();});
+b.addEventListener('paste',e=>{e.preventDefault();const t=(e.clipboardData.getData('text')||'').replace(/\D/g,'').slice(0,6);t.split('').forEach((c,j)=>{if(otp[j])otp[j].value=c;});if(t.length)otp[Math.min(t.length,5)].focus();});});
+let tries=4;
+$('verify').onclick=()=>{const code=otp.map(b=>b.value).join('');
+if(code==='482916'){go(3);}else{tries--;$('otperr').classList.remove('hidden');$('tries').textContent=Math.max(tries,0);
+otp.forEach(b=>{b.classList.add('err-b');setTimeout(()=>b.classList.remove('err-b'),400);});
+if(tries<=0){$('otperr').innerHTML='Too many tries. Wait 1 hour, then request a new code.';$('verify').disabled=true;}}};
+let cd=42;function tick(){const r=$('resend');if(cd<=0){r.disabled=false;r.textContent='Resend code';r.onclick=()=>{cd=60;r.disabled=true;tick();};return;}r.textContent='Resend code in 0:'+String(cd).padStart(2,'0');cd--;setTimeout(tick,1000);}
+$('create').onclick=()=>{const n=$('dname').value.trim();if(n)$('wname').textContent=n;go(4);};
+</script>
+</body>
+</html>
