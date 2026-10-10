@@ -35,7 +35,7 @@ app.post('/otp/verify', async (c: AppContext) => {
     display_name: z.string().max(60).optional(),
     country_code: z.string().regex(/^[A-Z]{2}$/).optional(),
     device: z.object({
-      fingerprint: z.string().min(8).max(128),
+      fingerprint: z.string().min(8).max(512),
       user_agent: z.string().max(512).optional(),
       platform: z.string().max(64).optional(),
     }).optional(),
