@@ -249,6 +249,7 @@ export class PlayerCore {
   private intervals: Array<[number, number]> = [];
   private answered = new Set<string>();
   private presented = new Map<string, number>();
+  private presentFailed = new Set<string>();
   private hbTimer: ReturnType<typeof setInterval> | null = null;
   private failed = false;
   private destroyed = false;
@@ -362,9 +363,11 @@ export class PlayerCore {
     if (pos > this.maxPos) this.maxPos = pos;
     this.ui.setPosition(pos);
     this.updateChecklist();
-    // Due attention checks → pause + present.
+    // Due attention checks → pause + present. A check whose present call failed
+    // is retried on the next successful heartbeat, not every tick (that
+    // spammed an error toast per second when the server position lagged).
     for (const chk of this.checks) {
-      if (this.answered.has(chk.id) || this.presented.has(chk.id)) continue;
+      if (this.answered.has(chk.id) || this.presented.has(chk.id) || this.presentFailed.has(chk.id)) continue;
       if (pos >= chk.scheduled_at_s) this.presentCheck(chk);
     }
   };
@@ -462,6 +465,9 @@ export class PlayerCore {
       this.intervals = data.intervals;
       this.ui.setIntervals(data.intervals);
     }
+    // A successful heartbeat means the server position is fresh — allow
+    // failed attention-check presents another attempt.
+    if (this.presentFailed.size > 0) this.presentFailed.clear();
     if (typeof data.duration_s === 'number' && data.duration_s > 0 && data.duration_s !== this.duration) {
       this.duration = data.duration_s;
       this.ui.setDuration(data.duration_s);
@@ -475,7 +481,14 @@ export class PlayerCore {
     try {
       data = await api('POST', `/v1/watch/${this.sid}/attention`, { check_id: chk.id });
     } catch (e: any) {
-      this.ui.toast(`Could not load the attention check.${e?.requestId ? ` (Ref: ${String(e.requestId).slice(0, 8)})` : ''}`, 'err');
+      // One toast per check: the tick retries every second, so without this
+      // guard a transient failure (e.g. server position lagging the player)
+      // stacks a toast per second. The next successful heartbeat clears the
+      // flag for another attempt.
+      if (!this.presentFailed.has(chk.id)) {
+        this.ui.toast(`Could not load the attention check.${e?.requestId ? ` (Ref: ${String(e.requestId).slice(0, 8)})` : ''}`, 'err');
+      }
+      this.presentFailed.add(chk.id);
       this.driver.play();
       return;
     }
@@ -837,6 +850,8 @@ export function WatchPlayerView({ claim, sessionId }: { claim: ClaimResponse; se
           onClick={() => {
             if (!window.confirm('Skip this video? Skipped videos can come back after 24 hours. You won\u2019t earn for this one.'))
               return;
+            // Best-effort: free the server session so the next claim isn't blocked.
+            api('POST', `/v1/watch/${sessionId}/abandon`, {}).catch(() => {});
             coreRef.current?.abort();
             navigate({ to: '/app' });
           }}

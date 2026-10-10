@@ -269,6 +269,20 @@ app.post('/watch/:sid/player-error', async (c: AppContext) => {
   return ok(c, { ok: true, note: 'Noted — this one is on us, not you.' });
 });
 
+// User-initiated skip: abandon the session server-side so the
+// "one active session per user" gate doesn't block the next claim.
+// (The client's Skip button previously only aborted locally.)
+app.post('/watch/:sid/abandon', async (c: AppContext) => {
+  const sid = pathSid(c);
+  const session = await getSession(c.env.DB, sid);
+  const err = ownSessionError(c, session);
+  if (err) return err;
+  const s = session!;
+  if (s.status !== 'active') return ok(c, { ok: true, note: 'Session already settled.' });
+  await abandonSession(c.env.DB, s, 'expired', 'user_skipped');
+  return ok(c, { ok: true });
+});
+
 app.post('/watch/:sid/attention', async (c: AppContext) => {
   const sid = pathSid(c);
   const session = await getSession(c.env.DB, sid);
