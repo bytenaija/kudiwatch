@@ -32,7 +32,7 @@ app.post('/otp/verify', async (c: AppContext) => {
   const parsed = z.object({
     phone_e164: E164,
     code: z.string().regex(/^\d{6}$/),
-    display_name: z.string().min(1).max(60).optional(),
+    display_name: z.string().max(60).optional(),
     country_code: z.string().regex(/^[A-Z]{2}$/).optional(),
     device: z.object({
       fingerprint: z.string().min(8).max(128),
