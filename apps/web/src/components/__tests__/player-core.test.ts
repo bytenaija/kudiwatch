@@ -1,10 +1,10 @@
-// PlayerCore integration test: the ported anti-fraud player logic against the REAL
-// local API (server must be up: npm run dev). Mocked <video> element + DOM shims,
-// but real signup → claim → heartbeat → attention → complete protocol, driven with
-// honest 1x playback in real time.
+// PlayerCore integration test: the anti-fraud player logic against the REAL
+// local API (server must be up: npm run dev). FakeDriver stands in for the
+// YouTube IFrame player (headless CI can't load youtube.com); the protocol
+// under test — claim → heartbeat → attention → complete — is player-agnostic.
 // Run: npx tsx --tsconfig apps/web/tsconfig.json apps/web/src/components/__tests__/player-core.test.ts
 import { DatabaseSync } from 'node:sqlite';
-import { PlayerCore } from '../WatchPlayer';
+import { PlayerCore, type PlayerDriver } from '../WatchPlayer';
 
 const BASE = 'http://127.0.0.1:8787';
 const DB_PATH = `${process.env.HOME}/workspace/kudiwatch/data/kudiwatch.db`;
@@ -31,35 +31,52 @@ const realFetch = globalThis.fetch;
   return res;
 };
 
-// ---- DOM shims ----
-type Handler = (...args: any[]) => void;
-function makeEmitter() {
-  const map = new Map<string, Handler[]>();
-  return {
-    addEventListener: (t: string, h: Handler) => { map.set(t, [...(map.get(t) ?? []), h]); },
-    removeEventListener: (t: string, h: Handler) => { map.set(t, (map.get(t) ?? []).filter((x) => x !== h)); },
-    fire: (t: string, e: any = {}) => { for (const h of map.get(t) ?? []) h(e); },
-  };
-}
-const winEvents = makeEmitter();
-const docEvents = makeEmitter();
-(globalThis as any).window = { addEventListener: winEvents.addEventListener, removeEventListener: winEvents.removeEventListener };
-const mockDoc: any = {
-  hidden: false, visibilityState: 'visible', fullscreenElement: null,
-  addEventListener: docEvents.addEventListener, removeEventListener: docEvents.removeEventListener,
+// ---- DOM shims (document/window only; no <video> anymore) ----
+const docEvents = new Map<string, Array<(...a: any[]) => void>>();
+const winEvents = new Map<string, Array<(...a: any[]) => void>>();
+(globalThis as any).window = {
+  addEventListener: (t: string, h: any) => { winEvents.set(t, [...(winEvents.get(t) ?? []), h]); },
+  removeEventListener: (t: string, h: any) => { winEvents.set(t, (winEvents.get(t) ?? []).filter((x) => x !== h)); },
 };
-(globalThis as any).document = mockDoc;
+(globalThis as any).document = {
+  hidden: false, visibilityState: 'visible', fullscreenElement: null,
+  addEventListener: (t: string, h: any) => { docEvents.set(t, [...(docEvents.get(t) ?? []), h]); },
+  removeEventListener: (t: string, h: any) => { docEvents.set(t, (docEvents.get(t) ?? []).filter((x) => x !== h)); },
+};
 try { Object.defineProperty(globalThis, 'navigator', { value: {}, configurable: true }); } catch { /* guarded in core */ }
 
-function makeVideo() {
-  const em = makeEmitter();
-  return {
-    ...em, currentTime: 0, duration: 75, playbackRate: 1, paused: true,
-    muted: false, readyState: 4, src: '', preload: '', playCalls: 0, pauseCalls: 0,
-    async play(this: any) { this.playCalls++; this.paused = false; },
-    pause(this: any) { this.pauseCalls++; this.paused = true; },
-    setAttribute() {}, requestFullscreen() {},
-  } as any;
+// ---- FakeDriver: scriptable stand-in for the YouTube IFrame player ----
+class FakeDriver implements PlayerDriver {
+  position = 0;
+  rate = 1;
+  duration: number;
+  playing = false;
+  playCalls = 0;
+  pauseCalls = 0;
+  seeks: number[] = [];
+  private tickCb: ((p: number) => void) | null = null;
+  private rateCb: (() => void) | null = null;
+  private endedCb: (() => void) | null = null;
+  private errorCb: ((c: number | string) => void) | null = null;
+  constructor(duration: number) { this.duration = duration; }
+  async init(_c: any, _v: string): Promise<number> { return this.duration; }
+  play() { this.playCalls++; this.playing = true; }
+  pause() { this.pauseCalls++; this.playing = false; }
+  isPlaying() { return this.playing; }
+  getPosition() { return this.position; }
+  getRate() { return this.rate; }
+  seekTo(s: number) { this.seeks.push(s); this.position = s; this.tick(); }
+  setRate(r: number) { this.rate = r; }
+  onTick(cb: (p: number) => void) { this.tickCb = cb; }
+  onRateChange(cb: () => void) { this.rateCb = cb; }
+  onEnded(cb: () => void) { this.endedCb = cb; }
+  onError(cb: (c: number | string) => void) { this.errorCb = cb; }
+  destroy() { this.tickCb = null; }
+  // test controls
+  tick() { this.tickCb?.(this.position); }
+  fireRateChange() { this.rateCb?.(); }
+  fireEnded() { this.endedCb?.(); }
+  fireError(c: number | string) { this.errorCb?.(c); }
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -89,12 +106,11 @@ async function main() {
   if (!feed.assignment) { console.log('  SKIP: no assignment offered'); process.exit(2); }
   r = await fetch(`${BASE}/v1/assignments/${feed.assignment.id}/claim`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
   const claim = (await r.json()).data;
-  check('claim ok', !!claim.session_id && !!claim.watch_token, JSON.stringify(claim).slice(0, 100));
+  check('claim ok', !!claim.session_id && !!claim.youtube_video_id, JSON.stringify(claim).slice(0, 120));
   const duration: number = claim.video.duration_s;
   const checks: Array<{ id: string; type: 'tap' | 'quiz'; scheduled_at_s: number }> = claim.checks ?? [];
-  console.log(`  session=${claim.session_id} duration=${duration}s checks=${checks.length} ${checks.map((c) => `${c.type}@${c.scheduled_at_s}s`).join(',')}`);
+  console.log(`  session=${claim.session_id} yt=${claim.youtube_video_id} duration=${duration}s checks=${checks.length}`);
 
-  // quiz answers live server-side only (never sent to the client); the test may peek at the local DB
   const db = new DatabaseSync(DB_PATH);
   const quizAnswer = (checkId: string): number | undefined => {
     try {
@@ -104,10 +120,11 @@ async function main() {
     } catch { return undefined; }
   };
 
-  const sinkCalls: Record<string, any[]> = { attention: [], done: [], fail: [], hidden: [], intervals: [] };
+  const sinkCalls: Record<string, any[]> = { attention: [], done: [], fail: [], hidden: [], intervals: [], durations: [] };
   const ui = {
     setIntervals: (iv: any) => sinkCalls.intervals.push(iv),
     setPosition: () => {},
+    setDuration: (d: number) => sinkCalls.durations.push(d),
     setChecklist: () => {},
     setHidden: (b: boolean) => sinkCalls.hidden.push(b),
     setAttention: (a: any) => sinkCalls.attention.push(a),
@@ -116,50 +133,42 @@ async function main() {
     toast: () => {},
   };
 
-  const video = makeVideo();
-  video.duration = duration;
-  const core = new PlayerCore({
-    sessionId: claim.session_id, videoEl: video,
-    streamUrl: `${claim.stream_url}?wt=${encodeURIComponent(claim.watch_token)}`,
-    checks, duration, ui,
-  });
+  const driver = new FakeDriver(duration);
+  const core = new PlayerCore({ sessionId: claim.session_id, driver, checks, duration, ui });
 
   console.log('[test] start()');
-  await core.start();
-  check('stream url set', String(video.src).startsWith('/v1/stream/'));
-  check('play attempted', video.playCalls >= 1);
-  video.fire('loadedmetadata');
+  await core.start({} as any, claim.youtube_video_id);
+  check('play attempted', driver.playCalls >= 1);
 
   console.log('[test] client-side enforcement (seek clamp, rate lock, visibility)');
-  // advance a little so maxPos is non-trivial
-  for (let t = 1; t <= 4; t++) { video.currentTime = t; video.fire('timeupdate'); await sleep(700); }
-  const maxPos = video.currentTime;
-  video.currentTime = maxPos + 30; video.fire('seeking');
-  check('forward seek clamped to maxPos', Math.abs(video.currentTime - maxPos) < 0.01, `ct=${video.currentTime}`);
-  video.currentTime = 2; video.fire('seeking');
-  check('backward seek allowed', video.currentTime === 2);
-  video.currentTime = maxPos;
-  video.playbackRate = 2; video.fire('ratechange');
-  check('rate forced back to 1x', video.playbackRate === 1);
-  check('paused on rate violation', video.pauseCalls >= 1);
-  await video.play();
-  mockDoc.hidden = true; mockDoc.visibilityState = 'hidden'; docEvents.fire('visibilitychange');
+  for (let t = 1; t <= 4; t++) { driver.position = t; driver.tick(); await sleep(700); }
+  const maxPos = driver.position;
+  driver.position = maxPos + 30; driver.tick();
+  check('forward seek clamped to maxPos', Math.abs(driver.position - maxPos) < 0.01 && driver.seeks.length > 0, `pos=${driver.position}`);
+  driver.position = 2; driver.tick();
+  check('backward seek allowed', driver.position === 2);
+  driver.position = maxPos;
+  driver.rate = 2; driver.fireRateChange();
+  check('rate forced back to 1x', driver.rate === 1);
+  check('paused on rate violation', driver.pauseCalls >= 1);
+  driver.play();
+  (globalThis as any).document.hidden = true;
+  for (const h of docEvents.get('visibilitychange') ?? []) h();
   await sleep(1200);
-  check('paused when tab hidden', video.pauseCalls >= 1);
+  check('paused when tab hidden', driver.pauseCalls >= 1);
   check('ui.setHidden(true)', sinkCalls.hidden.includes(true));
-  mockDoc.hidden = false; mockDoc.visibilityState = 'visible'; docEvents.fire('visibilitychange');
-  await video.play();
+  (globalThis as any).document.hidden = false;
+  for (const h of docEvents.get('visibilitychange') ?? []) h();
+  driver.play();
 
   console.log('[test] honest full playback with attention checks');
   const answered = new Set<string>();
   const t0 = Date.now();
   let t = Math.floor(maxPos) + 1;
-  // hold just before the end until every scheduled check is presented+answered
   while (t <= duration) {
     const hold = t >= duration && answered.size < checks.length;
-    video.currentTime = hold ? duration - 0.5 : Math.min(t, duration);
-    video.fire('timeupdate');
-    // answer anything presented
+    driver.position = hold ? duration - 0.5 : Math.min(t, duration);
+    driver.tick();
     const att = sinkCalls.attention[sinkCalls.attention.length - 1];
     if (att && !answered.has(att.chk.id)) {
       const idx = att.chk.type === 'quiz' ? quizAnswer(att.chk.id) : undefined;
@@ -170,7 +179,7 @@ async function main() {
     }
     if (!hold) t++;
     await sleep(850);
-    if (Date.now() - t0 > (duration + 60) * 1000) break; // safety
+    if (Date.now() - t0 > (duration + 60) * 1000) break;
   }
   check('all scheduled checks answered', answered.size === checks.length, `answered=${answered.size}/${checks.length}`);
   check('no fail during playback', sinkCalls.fail.length === 0, JSON.stringify(sinkCalls.fail));
@@ -178,8 +187,8 @@ async function main() {
   check('server verified intervals', Array.isArray(iv) && iv.length > 0);
 
   console.log('[test] finish() → complete → credited');
-  video.currentTime = duration;
-  video.fire('ended');
+  driver.position = duration;
+  driver.fireEnded();
   await sleep(2500);
   const done = sinkCalls.done[0];
   check('onDone fired', !!done, JSON.stringify(sinkCalls.fail));
@@ -188,11 +197,11 @@ async function main() {
 
   console.log('[test] destroy() detaches');
   core.destroy();
-  const pb = video.pauseCalls;
-  mockDoc.hidden = true; docEvents.fire('visibilitychange');
+  const pb = driver.pauseCalls;
+  (globalThis as any).document.hidden = true;
+  for (const h of docEvents.get('visibilitychange') ?? []) h();
   await sleep(300);
-  check('no reaction after destroy', video.pauseCalls === pb);
-  mockDoc.hidden = false;
+  check('no reaction after destroy', driver.pauseCalls === pb);
   db.close();
 
   console.log(`\n${passed} passed, ${failed} failed`);

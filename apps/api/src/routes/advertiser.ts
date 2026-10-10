@@ -7,7 +7,7 @@ import { nowSec, uuid, queryOne, queryAll } from '../lib/db.js';
 import { getConfigNum } from '../lib/config.js';
 import { postEntries, getBalance, accountIdForUser, accountIdForCampaign, MOCK_FUNDING_ACCOUNT, LedgerError } from '../lib/ledger.js';
 import { MockCardAdapter } from '../lib/payouts.js';
-import { mintUploadGrant } from '../lib/r2sign.js';
+import { extractYouTubeId, fetchYouTubeMeta } from '../lib/youtube.js';
 import { requireAuth, requireRole, authedUser } from '../middleware.js';
 import { recordSignal } from '../lib/fraud.js';
 
@@ -43,99 +43,70 @@ app.post('/profile', async (c: AppContext) => {
 // Everything below needs the advertiser role.
 app.use(requireRole('advertiser'));
 
-// ---------- Video ingest ----------
+// ---------- Video ingest (YouTube) ----------
+// Decision #39: advertisers submit YouTube videos by URL. No file uploads, no
+// R2. Title/author come from YouTube's no-key oEmbed endpoint at submit time;
+// duration is unknown until the admin reviews the embedded preview (required
+// to approve). Embedding-disabled / private videos surface at playback time
+// via the player's onError → /watch/:sid/player-error.
 
-const ALLOWED_EXT = ['mp4', 'webm'];
-const ALLOWED_MIME: Record<string, string> = { mp4: 'video/mp4', webm: 'video/webm' };
+const quizSchema = z.object({
+  q: z.string().min(4).max(300),
+  choices: z.array(z.string().min(1).max(160)).length(4),
+  answer_idx: z.number().int().min(0).max(3),
+});
 
-app.post('/videos/upload-url', async (c: AppContext) => {
+app.post('/videos/submit', async (c: AppContext) => {
   const user = authedUser(c);
   const body = await c.req.json().catch(() => ({}));
   const parsed = z.object({
-    filename: z.string().min(1).max(200),
-    size_bytes: z.number().int().min(1),
-    sha256: z.string().regex(/^[a-f0-9]{64}$/i),
+    youtube_url: z.string().min(4).max(500),
+    quiz: quizSchema.nullable().optional(),
   }).safeParse(body);
-  if (!parsed.success) return fail(c, 'bad_request', 'filename, size_bytes and sha256 are required.');
+  if (!parsed.success) return fail(c, 'bad_request', 'Paste a YouTube link — watch, share, Shorts, or embed URL.');
 
-  const ext = parsed.data.filename.split('.').pop()?.toLowerCase() ?? '';
-  if (!ALLOWED_EXT.includes(ext)) return fail(c, 'bad_file', 'MP4 or WebM only.');
-  const maxBytes = await getConfigNum(c.env.DB, 'max_upload_bytes');
-  if (parsed.data.size_bytes > maxBytes) {
-    return fail(c, 'too_large', `Videos must be under ${Math.round(maxBytes / 1048576)} MB.`);
+  const ytId = extractYouTubeId(parsed.data.youtube_url);
+  if (!ytId) {
+    return fail(c, 'bad_url', 'That doesn\u2019t look like a YouTube video link. Check it and try again.', 422);
+  }
+
+  const dup = await queryOne<{ id: string; status: string }>(
+    c.env.DB, 'SELECT id, status FROM videos WHERE advertiser_id = ? AND youtube_video_id = ?', user.id, ytId);
+  if (dup) return fail(c, 'duplicate', 'You already submitted this video.', 409);
+
+  const meta = await fetchYouTubeMeta(ytId);
+  if (!meta) {
+    return fail(c, 'unresolvable',
+      'We couldn\u2019t reach that video on YouTube — it may be private, deleted, or the link is wrong.', 422);
   }
 
   const videoId = uuid();
-  const r2Key = `videos/${videoId}/source.${ext}`;
-  const grant = await mintUploadGrant(c.env, r2Key, videoId, ALLOWED_MIME[ext]!);
-
+  const now = nowSec();
+  // r2_key/sha256/size_bytes are legacy NOT NULL columns, unused for YouTube
+  // inventory — placeholder values keep old rows and constraints intact.
   await c.env.DB.prepare(
-    `INSERT INTO videos (id, advertiser_id, r2_key, sha256, duration_s, size_bytes, status, created_at)
-     VALUES (?, ?, ?, ?, 0, ?, 'uploaded', ?)`
-  ).bind(videoId, user.id, r2Key, parsed.data.sha256.toLowerCase(), parsed.data.size_bytes, nowSec()).run();
+    `INSERT INTO videos (id, advertiser_id, r2_key, sha256, duration_s, size_bytes, status, quiz,
+       youtube_video_id, youtube_title, youtube_author, created_at)
+     VALUES (?, ?, ?, ?, 0, 0, 'in_review', ?, ?, ?, ?, ?)`
+  ).bind(videoId, user.id, `yt:${ytId}`, `youtube:${ytId}`,
+    parsed.data.quiz ? JSON.stringify(parsed.data.quiz) : null,
+    ytId, meta.title, meta.author, now).run();
 
   return ok(c, {
     video_id: videoId,
-    r2_key: r2Key,
-    upload_url: grant.uploadUrl,
-    upload_method: grant.method,
-    expires_at: grant.expiresAt,
-    note: 'PUT the file bytes to upload_url, then POST /videos/:id/confirm.',
+    youtube_video_id: ytId,
+    title: meta.title,
+    author: meta.author,
+    status: 'in_review',
+    note: 'A person checks every video before it goes live.',
   }, 201);
-});
-
-app.post('/videos/:id/confirm', async (c: AppContext) => {
-  const user = authedUser(c);
-  const videoId = pathId(c);
-  const body = await c.req.json().catch(() => ({}));
-  const parsed = z.object({
-    duration_s: z.number().min(1).max(3600),
-    width: z.number().int().min(1).max(8192).optional(),
-    height: z.number().int().min(1).max(8192).optional(),
-    quiz: z.object({
-      q: z.string().min(4).max(300),
-      choices: z.array(z.string().min(1).max(160)).length(4),
-      answer_idx: z.number().int().min(0).max(3),
-    }).nullable().optional(),
-  }).safeParse(body);
-  if (!parsed.success) return fail(c, 'bad_request', 'duration_s (and dimensions) are required.');
-
-  const video = await queryOne<{ id: string; advertiser_id: string; status: string; r2_key: string; size_bytes: number }>(
-    c.env.DB, 'SELECT id, advertiser_id, status, r2_key, size_bytes FROM videos WHERE id = ?', videoId);
-  if (!video || video.advertiser_id !== user.id) return fail(c, 'not_found', 'Video not found.', 404);
-  if (video.status !== 'uploaded') return fail(c, 'bad_state', `Video is ${video.status}.`, 409);
-
-  // Bytes must actually be in storage (local shim or R2).
-  const head = await c.env.R2.head(video.r2_key);
-  if (!head) return fail(c, 'no_bytes', 'Upload the file first — no bytes found for this video.', 409);
-
-  // QA finding 4 (partial): the declared size_bytes must match the stored
-  // bytes exactly. Lying about size to bypass max_upload_bytes is rejected here.
-  // (Duration/container probing needs ffprobe — unavailable in Workers; the
-  // human admin review remains the gate for media validity. See DECISIONS #36.)
-  if (head.size !== video.size_bytes) {
-    return fail(c, 'size_mismatch',
-      `Uploaded bytes (${head.size}) do not match the declared size (${video.size_bytes}). Re-upload the file.`, 422);
-  }
-
-  const minDur = await getConfigNum(c.env.DB, 'min_video_duration_s');
-  const maxDur = await getConfigNum(c.env.DB, 'max_video_duration_s');
-  if (parsed.data.duration_s < minDur || parsed.data.duration_s > maxDur) {
-    return fail(c, 'bad_duration', `Videos must be ${minDur}–${maxDur} seconds.`, 422);
-  }
-
-  await c.env.DB.prepare(
-    `UPDATE videos SET duration_s = ?, width = ?, height = ?, quiz = ?, status = 'in_review' WHERE id = ?`
-  ).bind(parsed.data.duration_s, parsed.data.width ?? null, parsed.data.height ?? null,
-    parsed.data.quiz ? JSON.stringify(parsed.data.quiz) : null, videoId).run();
-  return ok(c, { video_id: videoId, status: 'in_review', note: 'A person checks every video before it goes live.' });
 });
 
 app.get('/videos', async (c: AppContext) => {
   const user = authedUser(c);
   const rows = await queryAll<Record<string, unknown>>(
     c.env.DB,
-    `SELECT id, r2_key, duration_s, width, height, size_bytes, status, rejection_reason, created_at
+    `SELECT id, youtube_video_id, youtube_title, youtube_author, duration_s, status, rejection_reason, created_at
      FROM videos WHERE advertiser_id = ? ORDER BY created_at DESC LIMIT 100`, user.id);
   return ok(c, { videos: rows });
 });

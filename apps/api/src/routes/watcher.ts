@@ -20,7 +20,7 @@ import { authedUser } from '../middleware.js';
 
 const app = new Hono<{ Bindings: Env; Variables: ReqVars }>();
 // NOTE: auth is applied path-scoped in index.ts (a global app.use() here would
-// leak onto sibling mounts like /v1/_dev/* and /v1/stream/*).
+// leak onto sibling mounts like /v1/_dev/*).
 
 // ---------- Feed & assignments ----------
 
@@ -78,9 +78,12 @@ app.post('/assignments/:id/claim', async (c: AppContext) => {
     return fail(c, 'budget_exhausted', 'This campaign just ran out of budget. Try another video.', 410);
   }
 
-  const video = await queryOne<{ id: string; r2_key: string; duration_s: number; status: string; quiz: string | null }>(
+  const video = await queryOne<{ id: string; youtube_video_id: string | null; youtube_title: string | null; duration_s: number; status: string; quiz: string | null }>(
     db, 'SELECT * FROM videos WHERE id = ?', campaign.video_id);
   if (!video || video.status !== 'approved') return fail(c, 'unavailable', 'This video is not available.', 410);
+  if (!video.youtube_video_id || !(video.duration_s > 0)) {
+    return fail(c, 'unavailable', 'This video is not ready yet.', 410);
+  }
 
   // ASN gate.
   const asn = c.get('cf')?.asn;
@@ -149,8 +152,8 @@ app.post('/assignments/:id/claim', async (c: AppContext) => {
     session_id: sessionId,
     watch_token: watchToken,
     expires_at: now + Math.ceil(video.duration_s) + grace,
-    stream_url: `/v1/stream/${video.id}`,
-    video: { id: video.id, duration_s: video.duration_s },
+    youtube_video_id: video.youtube_video_id,
+    video: { id: video.id, duration_s: video.duration_s, youtube_video_id: video.youtube_video_id, youtube_title: video.youtube_title },
     campaign: { id: campaign.id, title: campaign.title, price_per_view_cents: campaign.price_per_view_cents },
     checks: checkRows.map((r) => ({ id: r.id, type: r.check_type, scheduled_at_s: r.scheduled_at_s })),
   });
@@ -204,7 +207,7 @@ app.post('/watch/:sid/heartbeat', async (c: AppContext) => {
   if (err) return err;
   const s = session!;
   if (s.status !== 'active') {
-    return ok(c, { ok: false, reject_code: 'session_' + s.status, server_ts: nowSec(), watched_pct: s.watched_pct, intervals: [] });
+    return ok(c, { ok: false, reject_code: 'session_' + s.status, server_ts: nowSec(), watched_pct: s.watched_pct, duration_s: s.duration_s, intervals: [] });
   }
   const body = await c.req.json().catch(() => ({}));
   const parsed = z.object({
@@ -214,6 +217,10 @@ app.post('/watch/:sid/heartbeat', async (c: AppContext) => {
     playback_rate: z.number(),
     client_ts: z.number(),
     buffering_s: z.number().min(0).max(600).optional(),
+    // The YouTube player reports its own ground-truth duration at playback.
+    // The server reconciles it against the admin-declared duration (tolerance-
+    // bounded) instead of trusting it blindly — see validateHeartbeat.
+    player_duration_s: z.number().min(1).max(3600).optional(),
   }).safeParse(body);
   if (!parsed.success) return fail(c, 'bad_request', 'Bad heartbeat payload.');
 
@@ -235,9 +242,31 @@ app.post('/watch/:sid/heartbeat', async (c: AppContext) => {
     playback_rate: parsed.data.playback_rate,
     client_ts: parsed.data.client_ts,
     buffering_s: parsed.data.buffering_s ?? 0,
+    player_duration_s: parsed.data.player_duration_s,
   };
   const res = await validateHeartbeat(c.env.DB, s, input);
   return ok(c, res);
+});
+
+// Player-reported fatal playback problem (video unavailable/private, or
+// embedding disabled by the owner). No credit, no penalty: the session is
+// failed gracefully, the assignment is freed for re-offer, and a signal lets
+// a human pull the broken video.
+app.post('/watch/:sid/player-error', async (c: AppContext) => {
+  const sid = pathSid(c);
+  const session = await getSession(c.env.DB, sid);
+  const err = ownSessionError(c, session);
+  if (err) return err;
+  const s = session!;
+  if (s.status !== 'active') return ok(c, { ok: true, note: 'Session already settled.' });
+  const body = await c.req.json().catch(() => ({}));
+  const parsed = z.object({ error_code: z.string().min(1).max(32) }).safeParse(body);
+  const code = parsed.success ? parsed.data.error_code : 'unknown';
+  await recordSignal(c.env.DB, s.user_id, 'video_playback_error', 'low',
+    { session_id: sid, video_id: s.video_id, error_code: code }, sid);
+  await abandonSession(c.env.DB, s, 'failed', 'video_unavailable');
+  await c.env.DB.prepare(`UPDATE assignments SET status = 'expired' WHERE id = ?`).bind(s.assignment_id).run();
+  return ok(c, { ok: true, note: 'Noted — this one is on us, not you.' });
 });
 
 app.post('/watch/:sid/attention', async (c: AppContext) => {

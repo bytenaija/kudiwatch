@@ -1,6 +1,6 @@
 /* KudiWatch service worker (SPA build): app shell cached; video NEVER cached
-   (always streamed via token-bound /v1/stream URLs). API calls pass through
-   (offline queue lives in the page via IndexedDB). */
+   (YouTube embeds are cross-origin and pass through untouched). API calls
+   pass through (offline queue lives in the page via IndexedDB). */
 const CACHE = 'kw-shell-v2';
 const SHELL = [
   '/', '/index.html',
@@ -21,7 +21,7 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
-  // Never cache: video streams, API, uploads.
+  // Never cache: API. YouTube embeds are cross-origin (never cached below).
   if (url.pathname.startsWith('/v1/')) return;
   if (e.request.method !== 'GET') return;
   e.respondWith(

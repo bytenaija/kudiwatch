@@ -13,6 +13,8 @@ export interface HeartbeatInput {
   playback_rate: number;
   client_ts: number;
   buffering_s?: number;
+  /** YouTube player's ground-truth duration, reported at playback start. */
+  player_duration_s?: number;
 }
 
 export interface HeartbeatResult {
@@ -20,6 +22,8 @@ export interface HeartbeatResult {
   reject_code?: string;
   server_ts: number;
   watched_pct: number;
+  /** Effective session duration (post-reconciliation) — the client's denominator. */
+  duration_s: number;
   /** Merged verified intervals, for the player's verified-segments bar. */
   intervals: Array<[number, number]>;
 }
@@ -122,8 +126,33 @@ export async function validateHeartbeat(
         await invalidateSession(db, session.id, 'fraud_pattern');
       }
     }
-    return { ok: false as const, reject_code: code, server_ts: serverTs, watched_pct: session.watched_pct, intervals };
+    return { ok: false as const, reject_code: code, server_ts: serverTs, watched_pct: session.watched_pct, duration_s: session.duration_s, intervals };
   };
+
+  // 1b. Duration reconciliation (decision #39): the watch token embeds the
+  // admin-declared duration, but the YouTube player is the ground truth. The
+  // client reports it on early beats; the server adopts it ONLY while almost
+  // nothing is watched yet (<1%), within the configured duration bounds, and
+  // within max(5 s, 10%) of the declared duration. Anything else is a fraud
+  // signal and the declared duration stands. The client is never trusted to
+  // move the denominator after watching starts.
+  if (input.player_duration_s != null && session.watched_pct < 1) {
+    const pd = input.player_duration_s;
+    const minDur = await getConfigNum(db, 'min_video_duration_s');
+    const maxDur = await getConfigNum(db, 'max_video_duration_s');
+    if (pd >= minDur && pd <= maxDur) {
+      const tol = Math.max(5, session.duration_s * 0.1);
+      if (Math.abs(pd - session.duration_s) <= tol) {
+        if (Math.abs(pd - session.duration_s) > 0.5) {
+          await db.prepare('UPDATE watch_sessions SET duration_s = ? WHERE id = ?').bind(pd, session.id).run();
+          session.duration_s = pd;
+        }
+      } else {
+        await recordSignal(db, session.user_id, 'duration_mismatch', 'medium',
+          { declared_s: session.duration_s, reported_s: pd }, session.id);
+      }
+    }
+  }
 
   // 1. Sequence chain: strictly increasing from last_seq+1.
   if (!Number.isInteger(input.seq) || input.seq < 1) {
@@ -148,7 +177,7 @@ export async function validateHeartbeat(
     await db.prepare(
       'UPDATE watch_sessions SET last_seq = ?, last_position_s = ?, last_hb_ts = ? WHERE id = ?'
     ).bind(input.seq, input.position_s, serverTs, session.id).run();
-    return { ok: false, reject_code: 'hidden', server_ts: serverTs, watched_pct: session.watched_pct, intervals };
+    return { ok: false, reject_code: 'hidden', server_ts: serverTs, watched_pct: session.watched_pct, duration_s: session.duration_s, intervals };
   }
 
   // 3. Rate lock: exactly 1.0.
@@ -226,7 +255,7 @@ export async function validateHeartbeat(
     }
   }
 
-  return { ok: true, server_ts: serverTs, watched_pct: pct, intervals: merged };
+  return { ok: true, server_ts: serverTs, watched_pct: pct, duration_s: session.duration_s, intervals: merged };
 }
 
 export async function invalidateSession(db: DbAdapter, sessionId: string, reason: string): Promise<void> {

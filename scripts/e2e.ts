@@ -70,19 +70,15 @@ async function main(): Promise<void> {
   if (r.status !== 200) throw new Error(`claim failed: ${JSON.stringify(r.json)}`);
   const claim = r.json.data;
   const sid: string = claim.session_id;
-  const watchToken: string = claim.watch_token;
+  
   const checks: Array<{ id: string; type: string; scheduled_at_s: number }> = claim.checks;
   console.log(`[e2e] claimed session ${sid}, ${checks.length} attention check(s) scheduled`);
 
-  // --- Stream sanity: range request with the watch token ---
-  const streamRes = await fetch(`${BASE}/v1/stream/${offer.video.id}?wt=${watchToken}`, {
-    headers: { Range: 'bytes=0-1023' },
-  });
-  const firstBytes = new Uint8Array(await streamRes.arrayBuffer());
-  if (streamRes.status !== 206 || firstBytes.length !== 1024) {
-    throw new Error(`stream range failed: ${streamRes.status} len=${firstBytes.length}`);
+  // --- Claim shape (decision #39): YouTube inventory, no stream URL ---
+  if (!claim.youtube_video_id || !/^[A-Za-z0-9_-]{11}$/.test(claim.youtube_video_id)) {
+    throw new Error(`claim missing youtube_video_id: ${JSON.stringify(claim).slice(0, 120)}`);
   }
-  console.log(`[e2e] stream 206 partial content OK (${firstBytes.length} bytes)`);
+  console.log(`[e2e] claim carries youtube_video_id=${claim.youtube_video_id}`);
 
   // --- Real-time heartbeats (10 s cadence, honest positions) ---
   const answered = new Set<string>();
@@ -96,6 +92,7 @@ async function main(): Promise<void> {
     position = Math.min(DURATION, t);
     r = await api('POST', `/v1/watch/${sid}/heartbeat`, {
       seq, position_s: position, visible: true, playback_rate: 1, client_ts: Date.now() / 1000,
+      ...(seq === 1 ? { player_duration_s: DURATION } : {}),
     }, headers);
     const hb = r.json.data;
     if (!hb.ok) throw new Error(`heartbeat ${seq} rejected: ${hb.reject_code}`);
@@ -183,6 +180,40 @@ async function main(): Promise<void> {
   // Restore the $1.00 min.
   await signInAs(ADMIN_PHONE);
   await api('PUT', '/v1/admin/config', { key: 'min_payout_cents', value: '100' });
+
+  // --- YouTube submit flow (decision #39) ---
+  const ADV_PHONE = '+10000000002';
+  await signInAs(ADV_PHONE);
+  // 1. Garbage URL → 422 bad_url (no network needed).
+  r = await api('POST', '/v1/advertiser/videos/submit', { youtube_url: 'not a url at all' });
+  if (r.status !== 422 || r.json.error?.code !== 'bad_url') throw new Error(`bad_url not rejected: ${JSON.stringify(r.json)}`);
+  console.log('[e2e] submit rejects garbage URL (bad_url)');
+  // 2. Well-formed but unreachable ID → 422 unresolvable.
+  r = await api('POST', '/v1/advertiser/videos/submit', { youtube_url: 'https://www.youtube.com/watch?v=AAAAAAAAAAA' });
+  if (r.status !== 422 || r.json.error?.code !== 'unresolvable') throw new Error(`unresolvable not rejected: ${JSON.stringify(r.json)}`);
+  console.log('[e2e] submit rejects unreachable video (unresolvable)');
+  // 3. Real video → 201 with oEmbed title/author (use a fresh ID to dodge the duplicate guard).
+  const FRESH_YT = 'jNQXAC9IVRw'; // "Me at the zoo", 19s, oEmbed-verified
+  r = await api('POST', '/v1/advertiser/videos/submit', {
+    youtube_url: `https://youtu.be/${FRESH_YT}?si=abc`,
+    quiz: { q: 'E2E quiz?', choices: ['a', 'b', 'c', 'd'], answer_idx: 1 },
+  });
+  if (r.status !== 201) throw new Error(`submit failed: ${JSON.stringify(r.json)}`);
+  const newVideoId = r.json.data.video_id as string;
+  if (r.json.data.youtube_video_id !== FRESH_YT || !r.json.data.title) throw new Error('submit missing metadata');
+  console.log(`[e2e] submit OK: "${r.json.data.title}" by ${r.json.data.author}`);
+  // 4. Duplicate → 409.
+  r = await api('POST', '/v1/advertiser/videos/submit', { youtube_url: `https://www.youtube.com/watch?v=${FRESH_YT}` });
+  if (r.status !== 409) throw new Error(`duplicate not rejected: ${JSON.stringify(r.json)}`);
+  console.log('[e2e] submit rejects duplicate (409)');
+  // 5. Admin review: approve without duration → 422; with duration → approved.
+  await signInAs(ADMIN_PHONE);
+  r = await api('POST', `/v1/admin/videos/${newVideoId}/review`, { approve: true });
+  if (r.status !== 422) throw new Error(`approve-without-duration not rejected: ${JSON.stringify(r.json)}`);
+  console.log('[e2e] review requires duration_s to approve');
+  r = await api('POST', `/v1/admin/videos/${newVideoId}/review`, { approve: true, duration_s: 19 });
+  if (r.json.data?.video?.status !== 'approved') throw new Error(`approve failed: ${JSON.stringify(r.json)}`);
+  console.log('[e2e] review approved with duration_s=19');
 
   console.log('\n[e2e] ALL CHECKS PASSED ✔');
 }

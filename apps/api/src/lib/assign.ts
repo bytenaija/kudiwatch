@@ -12,7 +12,7 @@ export interface Targeting {
 
 export interface FeedOffer {
   assignment: { id: string; claim_deadline: number };
-  video: { id: string; duration_s: number };
+  video: { id: string; duration_s: number; youtube_video_id: string | null; youtube_title: string | null };
   campaign: { id: string; title: string; price_per_view_cents: number; advertiser: string };
 }
 
@@ -41,7 +41,7 @@ function parseTargeting(raw: string): Targeting {
 
 interface CampaignCandidate {
   id: string; title: string; price_per_view_cents: number;
-  video_id: string; duration_s: number; targeting: string;
+  video_id: string; duration_s: number; youtube_video_id: string | null; youtube_title: string | null; targeting: string;
   daily_cap: number; per_user_cap: number; priority: number;
   advertiser: string; views_today: number;
 }
@@ -71,7 +71,7 @@ export async function nextOffer(
   const rows = await db.prepare(
     `SELECT c.id, c.title, c.price_per_view_cents, c.video_id, c.targeting,
             c.daily_cap, c.per_user_cap, c.priority,
-            v.duration_s,
+            v.duration_s, v.youtube_video_id, v.youtube_title,
             COALESCE(ap.company_name, 'Advertiser') AS advertiser,
             COALESCE((SELECT SUM(views) FROM campaign_daily_spend
                       WHERE campaign_id = c.id AND day = ?), 0) AS views_today
@@ -140,7 +140,7 @@ export async function nextOffer(
 
   return {
     assignment: { id: assignmentId, claim_deadline: now + claimTtl },
-    video: { id: best.video_id, duration_s: best.duration_s },
+    video: { id: best.video_id, duration_s: best.duration_s, youtube_video_id: best.youtube_video_id, youtube_title: best.youtube_title },
     campaign: { id: best.id, title: best.title, price_per_view_cents: best.price_per_view_cents, advertiser: best.advertiser },
   };
 }

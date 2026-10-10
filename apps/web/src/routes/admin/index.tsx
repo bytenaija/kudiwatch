@@ -198,6 +198,7 @@ function VideosTab() {
   const [videos, setVideos] = useState<any[]>([]);
   const [rejectFor, setRejectFor] = useState<string | null>(null);
   const [note, setNote] = useState('');
+  const [durations, setDurations] = useState<Record<string, string>>({});
   const [working, setWorking] = useState(false);
 
   const load = async () => {
@@ -215,7 +216,16 @@ function VideosTab() {
 
   const review = async (id: string, approve: boolean, reason?: string) => {
     try {
-      await api('POST', `/v1/admin/videos/${id}/review`, { approve, reason });
+      const body: any = { approve, reason };
+      if (approve) {
+        const d = Number(durations[id]);
+        if (!d || d < 1) {
+          toast('Enter the video length in seconds first — read it off the preview.', 'warn');
+          return;
+        }
+        body.duration_s = d;
+      }
+      await api('POST', `/v1/admin/videos/${id}/review`, body);
       toast(approve ? 'Video approved.' : 'Video rejected.');
       load();
     } catch (e: any) {
@@ -243,14 +253,40 @@ function VideosTab() {
         <div className="card" key={v.id}>
           <div className="between">
             <div>
-              <strong className="mono">{v.id.slice(0, 8)}…</strong>
+              <strong>{v.youtube_title || v.youtube_video_id || v.id.slice(0, 8) + '…'}</strong>
               <p className="small" style={{ margin: 0 }}>
-                {v.advertiser || ''} · {v.duration_s}s · {(v.size_bytes / 1048576).toFixed(1)} MB · {v.advertiser_video_count} videos
+                {v.advertiser || ''} · {v.youtube_author || ''} · {v.advertiser_video_count} videos
               </p>
             </div>
             <span className="chip warn">IN REVIEW</span>
           </div>
-          <div className="row" style={{ marginTop: 12 }}>
+          {v.youtube_video_id && (
+            <div style={{ marginTop: 12, aspectRatio: '16/9', maxWidth: 480 }}>
+              <iframe
+                width="100%"
+                height="100%"
+                src={`https://www.youtube-nocookie.com/embed/${v.youtube_video_id}`}
+                title={v.youtube_title || 'Video preview'}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                style={{ border: 0, borderRadius: 8 }}
+              />
+            </div>
+          )}
+          <div className="row" style={{ marginTop: 12, alignItems: 'end' }}>
+            <div>
+              <label htmlFor={`dur-${v.id}`}>Length (seconds) — required to approve</label>
+              <input
+                id={`dur-${v.id}`}
+                type="number"
+                min={1}
+                max={3600}
+                inputMode="numeric"
+                style={{ maxWidth: 140 }}
+                value={durations[v.id] || ''}
+                onChange={(e) => setDurations((prev) => ({ ...prev, [v.id]: e.target.value }))}
+              />
+            </div>
             <button className="btn primary sm" onClick={() => review(v.id, true)}>Approve</button>
             <button className="btn ghost sm" onClick={() => setRejectFor(v.id)}>Reject…</button>
           </div>

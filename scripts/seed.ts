@@ -4,9 +4,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createHash } from 'node:crypto';
 import { openDatabase } from '../apps/api/src/local/sqlite.js';
-import { FsR2Adapter } from '../apps/api/src/local/r2fs.js';
 import { postEntries, accountIdForUser, accountIdForCampaign, MOCK_FUNDING_ACCOUNT, getBalance } from '../apps/api/src/lib/ledger.js';
 import { nowSec, uuid } from '../apps/api/src/lib/db.js';
 
@@ -14,7 +12,6 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(here, '..');
 const DATA = path.join(ROOT, 'data');
 const DB_PATH = process.env.KW_DB ?? path.join(DATA, 'kudiwatch.db');
-const R2_DIR = path.join(DATA, 'r2');
 
 const ADMIN_PHONE = '+10000000001';
 const ADV_PHONE = '+10000000002';
@@ -24,23 +21,21 @@ const WATCHERS = [
   { phone: '+15551230003', name: 'Chidi', cc: 'NG' },
 ];
 
+// Decision #39: seed inventory is YouTube videos. IDs are real (oEmbed-verified);
+// durations are demo-declared for fast local e2e (the real videos are longer) —
+///staging is never seeded; the founder supplies real videos there.
 const VIDEOS = [
-  { file: 'demo-30s.mp4', title: 'Demo Brand — 30s spot', duration: 30, quiz: null as null | object },
+  { yt: 'dQw4w9WgXcQ', title: 'Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)', author: 'Rick Astley', duration: 30, quiz: null as null | object },
   {
-    file: 'demo-75s.mp4', title: 'Demo Brand — Summer Sale', duration: 75,
+    yt: '9bZkp7q19f0', title: 'PSY - GANGNAM STYLE M/V', author: 'officialpsy', duration: 75,
     quiz: {
       q: 'What was this ad about?',
       choices: ['A summer sale', 'A new phone', 'A football match', 'A cooking show'],
       answer_idx: 0,
     },
   },
-  { file: 'demo-120s.mp4', title: 'Demo Brand — Brand story', duration: 120, quiz: null },
+  { yt: 'aqz-KE-bpKQ', title: 'Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film', author: 'Blender', duration: 120, quiz: null },
 ];
-
-async function sha256File(p: string): Promise<string> {
-  const buf = await fs.readFile(p);
-  return createHash('sha256').update(buf).digest('hex');
-}
 
 async function ensureUser(db: ReturnType<typeof openDatabase>, phone: string, name: string, cc: string, roles: string[]): Promise<string> {
   const existing = await db.prepare('SELECT id FROM users WHERE phone_e164 = ?').bind(phone).first<{ id: string }>();
@@ -71,7 +66,6 @@ async function main(): Promise<void> {
   await db.exec(await fs.readFile(path.join(ROOT, 'db', 'seed.sql'), 'utf8'));
 
   const now = nowSec();
-  const r2 = new FsR2Adapter(R2_DIR);
 
   const adminId = await ensureUser(db, ADMIN_PHONE, 'Admin', 'NG', ['watcher', 'admin']);
   const advId = await ensureUser(db, ADV_PHONE, 'Demo Brand', 'NG', ['watcher', 'advertiser']);
@@ -93,33 +87,25 @@ async function main(): Promise<void> {
     ], now);
   }
 
-  // Videos: copy seed MP4s into the R2 shim, mark approved.
+  // Videos: YouTube inventory — direct insert as approved (admin-equivalent).
   const videoIds: string[] = [];
   for (const v of VIDEOS) {
-    const src = path.join(DATA, 'seed-videos', v.file);
-    try { await fs.stat(src); } catch {
-      console.error(`[seed] missing ${src} — run: npm run gen:videos`);
-      process.exit(1);
-    }
-    const existing = await db.prepare('SELECT id, r2_key FROM videos WHERE advertiser_id = ? AND duration_s = ?')
-      .bind(advId, v.duration).first<{ id: string; r2_key: string }>();
+    const existing = await db.prepare('SELECT id FROM videos WHERE advertiser_id = ? AND youtube_video_id = ?')
+      .bind(advId, v.yt).first<{ id: string }>();
     let videoId: string;
-    let r2Key: string;
     if (existing) {
-      videoId = existing.id; r2Key = existing.r2_key;
+      videoId = existing.id;
     } else {
       videoId = uuid();
-      r2Key = `videos/${videoId}/source.mp4`;
       await db.prepare(
-        `INSERT INTO videos (id, advertiser_id, r2_key, sha256, duration_s, width, height, size_bytes, status, quiz, reviewed_by, reviewed_at, created_at)
-         VALUES (?, ?, ?, ?, ?, 480, 270, ?, 'approved', ?, ?, ?, ?)`
-      ).bind(videoId, advId, r2Key, await sha256File(src), v.duration,
-        (await fs.stat(src)).size, v.quiz ? JSON.stringify(v.quiz) : null, adminId, now, now).run();
+        `INSERT INTO videos (id, advertiser_id, r2_key, sha256, duration_s, size_bytes, status, quiz,
+           youtube_video_id, youtube_title, youtube_author, reviewed_by, reviewed_at, created_at)
+         VALUES (?, ?, ?, ?, ?, 0, 'approved', ?, ?, ?, ?, ?, ?, ?)`
+      ).bind(videoId, advId, `yt:${v.yt}`, `youtube:${v.yt}`, v.duration,
+        v.quiz ? JSON.stringify(v.quiz) : null, v.yt, v.title, v.author, adminId, now, now).run();
     }
-    const bytes = await fs.readFile(src);
-    await r2.put(r2Key, bytes, { contentType: 'video/mp4' });
     videoIds.push(videoId);
-    console.log(`[seed] video ${v.title} → ${videoId} (${(bytes.length / 1024).toFixed(0)} KB)`);
+    console.log(`[seed] video ${v.title} → ${videoId} (yt:${v.yt}, ${v.duration}s declared)`);
   }
 
   // Campaign: live, $10 budget, 2¢/view, targeting NG+KE.

@@ -207,10 +207,10 @@ export interface FeedResponse {
 
 export interface ClaimResponse {
   session_id: string;
-  stream_url: string;
+  youtube_video_id: string;
   watch_token: string;
   checks: AttentionCheck[];
-  video: { duration_s: number };
+  video: { duration_s: number; youtube_video_id: string; youtube_title: string | null };
   campaign: { title: string; price_per_view_cents: number };
 }
 

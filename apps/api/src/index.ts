@@ -6,12 +6,11 @@ import type { Env, ReqVars } from './types.js';
 import { fail, newRequestId, type AppContext } from './lib/http.js';
 import { requireAuth } from './middleware.js';
 import { verifyWatchToken } from './lib/tokens.js';
-import { verifyLocalUploadSig } from './lib/r2sign.js';
+// (r2sign lib retained but dormant — decision #39 retired the R2 upload flow.)
 import authRoutes, { meApp } from './routes/auth.js';
 import watcherRoutes from './routes/watcher.js';
 import advertiserRoutes from './routes/advertiser.js';
 import adminRoutes from './routes/admin.js';
-import streamRoutes from './routes/stream.js';
 import devRoutes from './routes/dev.js';
 import { runCrons } from './lib/cron.js';
 
@@ -55,7 +54,7 @@ export function createApp(env: Env): Hono<{ Bindings: Env; Variables: ReqVars }>
   app.get('/v1/health', (c) => c.json({ data: { ok: true, env: env.ENV_NAME } }));
 
   // Watcher routes need auth, but a global app.use() inside the sub-app would
-  // leak onto sibling mounts (/v1/_dev/*, /v1/stream/*) — scope by path instead.
+  // leak onto sibling mounts (/v1/_dev/*) — scope by path instead.
   const auth = requireAuth();
   for (const p of [
     '/v1/feed/*', '/v1/assignments/*', '/v1/watch/*',
@@ -70,26 +69,9 @@ export function createApp(env: Env): Hono<{ Bindings: Env; Variables: ReqVars }>
   app.route('/v1', watcherRoutes);       // /feed, /assignments, /watch, /wallet, /payouts
   app.route('/v1/advertiser', advertiserRoutes);
   app.route('/v1/admin', adminRoutes);
-  app.route('/v1/stream', streamRoutes);
 
-  // Local-dev direct upload endpoint (the "presigned PUT" target when no R2 S3 creds).
-  app.put('/v1/_local-upload', async (c: AppContext) => {
-    if (env.ENV_NAME === 'prod') return fail(c, 'not_found', 'Not found.', 404);
-    const key = c.req.query('key');
-    const video = c.req.query('video');
-    const exp = c.req.query('exp');
-    const sig = c.req.query('sig');
-    if (!key || !video || !exp || !sig) return fail(c, 'bad_request', 'Missing upload params.');
-    if (!key.startsWith('videos/') || key.includes('..')) return fail(c, 'bad_request', 'Bad key.');
-    if (!(await verifyLocalUploadSig(env, key, video, exp, sig))) {
-      return fail(c, 'forbidden', 'Upload URL invalid or expired.', 403);
-    }
-    const body = c.req.raw.body;
-    if (!body) return fail(c, 'bad_request', 'Empty body.');
-    const contentType = c.req.header('content-type') ?? 'video/mp4';
-    await env.R2.put(key, body, { contentType });
-    return c.json({ data: { ok: true, key } });
-  });
+  // NOTE (decision #39): the local-dev direct-upload endpoint was removed with
+  // the R2 upload flow. Videos are submitted as YouTube URLs; R2 is dormant.
 
   if (env.ENV_NAME !== 'prod') {
     app.route('/v1/_dev', devRoutes);

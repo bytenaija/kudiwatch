@@ -70,7 +70,7 @@ function LandingPage() {
               Get paid for <span className="lp-h1-accent">your attention.</span>
             </h1>
             <p className="lp-lede">
-              Brands upload short videos. You watch them all the way through — verified
+              Brands submit their YouTube videos. You watch them all the way through — verified
               second by second — and earn <strong>$0.01–$0.03 per video</strong>.
               Every view comes with a receipt.
             </p>
@@ -159,7 +159,7 @@ function LandingPage() {
               <span className="lp-step-n">1</span>
               <div>
                 <h3>Get assigned a video</h3>
-                <p>Brands upload short videos. KudiWatch assigns them to you — pick one from your queue and press play.</p>
+                <p>Brands submit their YouTube videos. KudiWatch assigns them to you — pick one from your queue and press play.</p>
               </div>
             </li>
             <li>
@@ -202,7 +202,7 @@ function LandingPage() {
             <div className="lp-card">
               <span className="lp-card-ic"><Icon d={I.shield} /></span>
               <h3>Anti-fraud by design</h3>
-              <p>Device fingerprinting, one account per person, velocity limits — and every upload reviewed by a human before it goes live.</p>
+              <p>Device fingerprinting, one account per person, velocity limits — and every video reviewed by a human before it goes live.</p>
             </div>
             <div className="lp-card">
               <span className="lp-card-ic"><Icon d={I.eye} /></span>
@@ -240,7 +240,7 @@ function LandingPage() {
             </div>
             <div className="lp-card">
               <span className="lp-card-ic"><Icon d={I.users} /></span>
-              <h3>Human review of uploads</h3>
+              <h3>Human review of every video</h3>
               <p>Every advertiser video is reviewed by a person before it reaches a single watcher. No spam, no scams.</p>
             </div>
           </div>
@@ -290,7 +290,7 @@ function LandingPage() {
             </details>
             <details>
               <summary>What do advertisers get?</summary>
-              <p>Verified human attention with proof: a per-view receipt showing watch percentage, attention score, and checks passed — exportable to CSV. Uploads are human-reviewed before launch, and you only pay for verified completions.</p>
+              <p>Verified human attention with proof: a per-view receipt showing watch percentage, attention score, and checks passed — exportable to CSV. Videos are human-reviewed before launch, and you only pay for verified completions. KudiWatch sells attention, not view counts — we promise nothing about YouTube metrics.</p>
             </details>
             <details>
               <summary>Where is KudiWatch available?</summary>

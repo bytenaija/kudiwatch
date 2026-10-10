@@ -5,7 +5,7 @@ import { z } from 'zod';
 import type { Env, ReqVars } from '../types.js';
 import { ok, fail, pathId, pathSid, type AppContext } from '../lib/http.js';
 import { nowSec, uuid, queryOne, queryAll } from '../lib/db.js';
-import { getAllConfig, setConfig } from '../lib/config.js';
+import { getAllConfig, setConfig, getConfigNum } from '../lib/config.js';
 import { postEntries, getBalance, accountIdForUser, PAYOUT_CLEARING_ACCOUNT, LedgerError } from '../lib/ledger.js';
 import { getPayoutAdapter, redactDestination, type PayoutMethod } from '../lib/payouts.js';
 import { requireAuth, requireRole, authedUser } from '../middleware.js';
@@ -29,7 +29,7 @@ async function audit(
 app.get('/videos/review-queue', async (c: AppContext) => {
   const rows = await queryAll<Record<string, unknown>>(
     c.env.DB,
-    `SELECT v.id, v.advertiser_id, v.duration_s, v.width, v.height, v.size_bytes,
+    `SELECT v.id, v.advertiser_id, v.duration_s, v.youtube_video_id, v.youtube_title, v.youtube_author,
             v.status, v.created_at, ap.company_name AS advertiser,
             (SELECT COUNT(*) FROM videos WHERE advertiser_id = v.advertiser_id) AS advertiser_video_count
      FROM videos v LEFT JOIN advertiser_profiles ap ON ap.user_id = v.advertiser_id
@@ -43,6 +43,7 @@ app.post('/videos/:id/review', async (c: AppContext) => {
   const parsed = z.object({
     approve: z.boolean(),
     reason: z.string().max(500).optional(),
+    duration_s: z.number().min(1).max(3600).optional(),
   }).safeParse(body);
   if (!parsed.success) return fail(c, 'bad_request', 'approve (true/false) is required.');
 
@@ -57,9 +58,24 @@ app.post('/videos/:id/review', async (c: AppContext) => {
   const now = nowSec();
   const admin = authedUser(c);
   const next = parsed.data.approve ? 'approved' : 'rejected';
-  await c.env.DB.prepare(
-    `UPDATE videos SET status = ?, rejection_reason = ?, reviewed_by = ?, reviewed_at = ? WHERE id = ?`
-  ).bind(next, parsed.data.approve ? null : parsed.data.reason!.trim(), admin.id, now, videoId).run();
+  if (parsed.data.approve) {
+    // Decision #39: duration is unknown at submit time (YouTube gives us no
+    // no-key duration source), so the admin sets it from the embedded preview.
+    // The watch-session token embeds this duration — it must be real.
+    const minDur = await getConfigNum(c.env.DB, 'min_video_duration_s');
+    const maxDur = await getConfigNum(c.env.DB, 'max_video_duration_s');
+    const d = parsed.data.duration_s;
+    if (!d || d < minDur || d > maxDur) {
+      return fail(c, 'bad_duration', `Set the video's length (${minDur}–${maxDur} seconds) to approve — read it off the preview.`, 422);
+    }
+    await c.env.DB.prepare(
+      `UPDATE videos SET status = 'approved', duration_s = ?, rejection_reason = NULL, reviewed_by = ?, reviewed_at = ? WHERE id = ?`
+    ).bind(d, admin.id, now, videoId).run();
+  } else {
+    await c.env.DB.prepare(
+      `UPDATE videos SET status = 'rejected', rejection_reason = ?, reviewed_by = ?, reviewed_at = ? WHERE id = ?`
+    ).bind(parsed.data.reason!.trim(), admin.id, now, videoId).run();
+  }
   await audit(c, 'video.review', 'video', videoId, { before: { status: 'in_review' }, after: { status: next, reason: parsed.data.reason ?? null } });
   return ok(c, { video: { id: videoId, status: next } });
 });

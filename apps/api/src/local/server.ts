@@ -62,7 +62,7 @@ async function serveStatic(pathname: string): Promise<Response | null> {
   try {
     const st = await fs.stat(file);
     if (!st.isFile()) throw new Error('not a file');    const ext = path.extname(file).toLowerCase();
-    // Never serve .mp4 from the web dir as video cache — videos stream via /v1/stream only.
+    // Never serve media from the web dir as video cache — videos play via YouTube embeds only.
     const body = await fs.readFile(file);
     return new Response(body, { headers: { 'Content-Type': MIME[ext] ?? 'application/octet-stream', 'Cache-Control': 'no-cache' } });
   } catch {

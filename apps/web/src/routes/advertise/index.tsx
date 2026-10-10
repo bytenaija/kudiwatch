@@ -9,8 +9,10 @@ export const Route = createFileRoute('/advertise/')({
 
 interface AdvVideo {
   id: string;
+  youtube_video_id: string | null;
+  youtube_title: string | null;
+  youtube_author: string | null;
   duration_s: number;
-  size_bytes: number;
   status: string;
   rejection_reason?: string;
   advertiser?: string;
@@ -40,8 +42,8 @@ function AdvertisePage() {
   const [balance, setBalance] = useState(0);
   const [videos, setVideos] = useState<AdvVideo[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const [upStatus, setUpStatus] = useState<{ kind: 'info' | 'err'; msg: string } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [subStatus, setSubStatus] = useState<{ kind: 'info' | 'err'; msg: string } | null>(null);
   const [campFormOpen, setCampFormOpen] = useState(false);
   const [launching, setLaunching] = useState(false);
   const [report, setReport] = useState<React.ReactNode>(null);
@@ -59,7 +61,7 @@ function AdvertisePage() {
   const [q, setQ] = useState('');
   const [choices, setChoices] = useState(['', '', '', '']);
   const [qAnswer, setQAnswer] = useState(0);
-  const [file, setFile] = useState<File | null>(null);
+  const [ytUrl, setYtUrl] = useState('');
 
   useEffect(() => {
     if (!me) return;
@@ -148,56 +150,30 @@ function AdvertisePage() {
     }
   };
 
-  const upload = async () => {
-    const f = file;
-    if (!f) {
-      toast('Choose a video file first.', 'warn');
+  const submitVideo = async () => {
+    const url = ytUrl.trim();
+    if (!url) {
+      toast('Paste a YouTube link first.', 'warn');
       return;
     }
-    if (!/video\/(mp4|webm)/.test(f.type) && !/\.(mp4|webm)$/i.test(f.name)) {
-      toast('MP4 or WebM only.', 'warn');
-      return;
-    }
-    if (f.size > 200 * 1048576) {
-      toast('Videos must be under 200 MB.', 'warn');
-      return;
-    }
-    setUploading(true);
-    setUpStatus(null);
+    setSubmitting(true);
+    setSubStatus(null);
     try {
-      const buf = await f.arrayBuffer();
-      const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', buf))]
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('');
-      const grant = await api<{ upload_url: string; video_id: string }>('POST', '/v1/advertiser/videos/upload-url', {
-        filename: f.name,
-        size_bytes: f.size,
-        sha256: hash,
-      });
-      const up = await fetch(grant.upload_url, { method: 'PUT', body: f, headers: { 'Content-Type': f.type } });
-      if (!up.ok) throw new Error('Upload failed — try again.');
-      const url = URL.createObjectURL(f);
-      const duration = await new Promise<number>((resolve) => {
-        const v = document.createElement('video');
-        v.preload = 'metadata';
-        v.onloadedmetadata = () => resolve(v.duration);
-        v.onerror = () => resolve(0);
-        v.src = url;
-      });
-      URL.revokeObjectURL(url);
       const qq = q.trim();
-      const quiz =
-        qq && choices.every(Boolean) ? { q: qq, choices, answer_idx: qAnswer } : null;
-      await api('POST', `/v1/advertiser/videos/${grant.video_id}/confirm`, {
-        duration_s: Math.round(duration * 10) / 10,
+      const quiz = qq && choices.every(Boolean) ? { q: qq, choices, answer_idx: qAnswer } : null;
+      const res = await api<{ title: string; author: string }>('POST', '/v1/advertiser/videos/submit', {
+        youtube_url: url,
         quiz,
       });
-      setUpStatus({ kind: 'info', msg: 'Uploaded — a person checks every video before it goes live.' });
+      setSubStatus({ kind: 'info', msg: `“${res.title}” submitted — a person checks every video before it goes live.` });
+      setYtUrl('');
+      setQ('');
+      setChoices(['', '', '', '']);
       loadVideos();
     } catch (e: any) {
-      setUpStatus({ kind: 'err', msg: e?.message || 'Upload failed.' });
+      setSubStatus({ kind: 'err', msg: e?.message || 'Submission failed.' });
     }
-    setUploading(false);
+    setSubmitting(false);
   };
 
   const launch = async () => {
@@ -287,7 +263,7 @@ function AdvertisePage() {
       <MockBanner />
       <OfflineBar />
       <h1>Pay for real human attention.</h1>
-      <p>Upload your video. Watchers watch it fully — verified second by second — and you get proof of every view.</p>
+      <p>Submit your YouTube video. Watchers watch it fully — verified second by second — and you get proof of every view. We sell verified attention, not view counts.</p>
 
       {!isAdvertiser && (
         <div className="card">
@@ -316,11 +292,11 @@ function AdvertisePage() {
 
           <h2>Videos</h2>
           <div className="card">
-            <label htmlFor="file">Upload a video</label>
-            <input type="file" id="file" accept="video/mp4,video/webm" style={{ minHeight: 44 }}
-              onChange={(e) => setFile(e.target.files?.[0] || null)} />
-            <p className="hint">MP4 or WebM · 15–180 seconds · up to 200 MB</p>
-            {upStatus && <div className={`banner ${upStatus.kind}`}>{upStatus.msg}</div>}
+            <label htmlFor="yturl">YouTube video link</label>
+            <input type="url" id="yturl" inputMode="url" placeholder="https://www.youtube.com/watch?v=…" value={ytUrl}
+              onChange={(e) => setYtUrl(e.target.value)} style={{ minHeight: 44 }} />
+            <p className="hint">Any public YouTube link — watch, share, Shorts, or embed URL. 15–180 seconds works best.</p>
+            {subStatus && <div className={`banner ${subStatus.kind}`}>{subStatus.msg}</div>}
             <div>
               <h3>Attention quiz (optional)</h3>
               <p className="small">One multiple-choice question, asked after 70% watched. Wrong answers don&apos;t earn.</p>
@@ -340,19 +316,31 @@ function AdvertisePage() {
                 ))}
               </select>
             </div>
-            <BusyButton className="btn primary" style={{ marginTop: 12 }} busy={uploading} busyLabel="Uploading…" onClick={upload}>
-              Upload
+            <BusyButton className="btn primary" style={{ marginTop: 12 }} busy={submitting} busyLabel="Submitting…" onClick={submitVideo}>
+              Submit video
             </BusyButton>
           </div>
           <div>
             {videos.length ? videos.map((v) => (
               <div className="card" key={v.id}>
                 <div className="between">
-                  <div>
-                    <strong className="mono">{v.id.slice(0, 8)}…</strong>
-                    <p className="small" style={{ margin: 0 }}>
-                      {v.duration_s}s · {(v.size_bytes / 1048576).toFixed(1)} MB
-                    </p>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    {v.youtube_video_id && (
+                      <img
+                        src={`https://i.ytimg.com/vi/${v.youtube_video_id}/mqdefault.jpg`}
+                        alt=""
+                        width={120}
+                        height={68}
+                        loading="lazy"
+                        style={{ borderRadius: 8, objectFit: 'cover' }}
+                      />
+                    )}
+                    <div>
+                      <strong>{v.youtube_title || v.youtube_video_id || v.id.slice(0, 8) + '…'}</strong>
+                      <p className="small" style={{ margin: 0 }}>
+                        {v.youtube_author ? `${v.youtube_author} · ` : ''}{v.duration_s > 0 ? `${Math.round(v.duration_s)}s · ` : ''}youtube.com/watch?v={v.youtube_video_id}
+                      </p>
+                    </div>
                   </div>
                   <span className={`chip ${v.status === 'approved' ? 'ok' : v.status === 'rejected' ? 'bad' : 'warn'}`}>
                     {v.status.replace('_', ' ').toUpperCase()}
@@ -371,7 +359,7 @@ function AdvertisePage() {
               <h3>1. Video</h3>
               <select value={cfVideo} onChange={(e) => setCfVideo(e.target.value)}>
                 {videos.filter((v) => v.status === 'approved').map((v) => (
-                  <option key={v.id} value={v.id}>{v.id.slice(0, 8)}… · {v.duration_s}s</option>
+                  <option key={v.id} value={v.id}>{(v.youtube_title || v.youtube_video_id || v.id).slice(0, 40)} · {Math.round(v.duration_s)}s</option>
                 ))}
                 {!videos.some((v) => v.status === 'approved') && <option value="">No approved videos yet</option>}
               </select>
